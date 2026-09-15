@@ -47,12 +47,17 @@ Agent process                     Your browser (any device)
 
 ## Install
 
-Prerequisite: the `schemaui` binary (the form engine).
+Prerequisite: the `schemaui` binary (the form engine,
+[YuniqueUnic/schemaui](https://github.com/YuniqueUnic/schemaui)). The
+auto-installer detects your platform and grabs the prebuilt binary:
 
 ```bash
-cargo binstall schemaui-cli   # prebuilt binary; or: cargo install schemaui-cli
-brew install YuniqueUnic/schemaui/schemaui   # macOS/Linux
+bash scripts/install.sh      # macOS / Linux / FreeBSD
+pwsh scripts/install.ps1     # Windows / PowerShell 7+
 ```
+
+Other channels (brew, scoop, winget, cargo, manual download): see
+[`install.md`](./install.md).
 
 Then pick one way to install the skill:
 

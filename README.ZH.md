@@ -43,12 +43,17 @@ Agent 进程                      你的浏览器 (任何设备)
 
 ## 安装
 
-前置条件：`schemaui` 二进制 (表单引擎)。
+前置条件：`schemaui` 二进制（表单引擎，
+[YuniqueUnic/schemaui](https://github.com/YuniqueUnic/schemaui))。自动安装脚
+本会检测平台并下载预编译二进制：
 
 ```bash
-cargo binstall schemaui-cli   # 预编译二进制;或 cargo install schemaui-cli
-brew install YuniqueUnic/schemaui/schemaui   # macOS/Linux
+bash scripts/install.sh      # macOS / Linux / FreeBSD
+pwsh scripts/install.ps1     # Windows / PowerShell 7+
 ```
+
+其它渠道（brew、scoop、winget、cargo、手动下载）见
+[`install.md`](./install.md)。
 
 然后三选一安装 skill:
 

@@ -1,6 +1,6 @@
 {
   "name": "a2ui-ask",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Interactive UI for AI agents — turn structured questions into browser forms.",
   "keywords": [
     "a2ui",
@@ -22,6 +22,7 @@
   "homepage": "https://github.com/YuniqueUnic/a2ui-ask",
   "files": [
     "SKILL.md",
+    "install.md",
     "scripts/",
     "prompts/",
     "examples/",

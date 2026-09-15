@@ -336,3 +336,72 @@ def test_missing_schema_exits_6(tmp_path: Path):
         text=True,
     )
     assert result.returncode == ask.EXIT_BAD_INPUT
+
+
+# ------------------------------------------------------- installer scripts
+
+INSTALL_SH = ROOT / "scripts" / "install.sh"
+INSTALL_PS1 = ROOT / "scripts" / "install.ps1"
+
+
+def host_triple() -> str:
+    import platform
+
+    arch = {"x86_64": "x86_64", "arm64": "aarch64", "aarch64": "aarch64"}[
+        platform.machine().lower()
+    ]
+    system = platform.system()
+    if system == "Darwin":
+        return f"{arch}-apple-darwin"
+    if system == "Linux":
+        return f"{arch}-unknown-linux-gnu"
+    pytest.skip(f"no host triple expectation for {system}")
+
+
+def test_install_sh_dry_run_detects_platform():
+    env = {**os.environ, "PATH": "/usr/bin:/bin"}  # hide any installed schemaui
+    result = subprocess.run(
+        ["bash", str(INSTALL_SH), "--dry-run"],
+        env=env,
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert result.returncode == 0, result.stderr
+    assert host_triple() in result.stdout
+    assert "schemaui-" in result.stdout and ".tar.gz" in result.stdout
+    assert "releases" in result.stdout  # resolved or fallback download URL
+
+
+def test_install_sh_reports_existing_binary():
+    if not BINARY:
+        pytest.skip("schemaui binary not available")
+    result = subprocess.run(
+        ["bash", str(INSTALL_SH)],
+        env={**os.environ, "PATH": f"{Path(BINARY).parent}:/usr/bin:/bin"},
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert result.returncode == 0
+    assert "already installed" in result.stdout
+
+
+@needs_pwsh
+def test_install_ps1_dry_run_and_platform_guard():
+    # dry-run with a stripped PATH: on non-Windows the guard must fire
+    script = (
+        f'$env:PATH = "/usr/bin:/bin"; & "{INSTALL_PS1}" -DryRun'
+    )
+    result = subprocess.run(
+        [PWSH, "-NoProfile", "-Command", script],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    if sys.platform == "win32":
+        assert result.returncode == 0
+        assert "pc-windows-msvc.zip" in result.stdout
+    else:
+        assert result.returncode != 0
+        assert "install.sh" in result.stderr

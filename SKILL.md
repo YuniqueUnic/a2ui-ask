@@ -13,9 +13,26 @@ description: >
 # a2ui-ask — collect user input via a browser form (file output)
 
 Interactive UI for AI agents: turn structured questions into browser forms. The
-rendering engine is the `schemaui` binary (`schemaui web`); this skill wraps it
-with scripts that handle binding, browser wakeup, timeout, and the file-output
-contract.
+rendering engine is the `schemaui` binary (`schemaui web`) from
+[YuniqueUnic/schemaui](https://github.com/YuniqueUnic/schemaui); this skill
+wraps it with scripts that handle binding, browser wakeup, timeout, and the
+file-output contract.
+
+## Prerequisite: the schemaui engine
+
+Check for the binary first: `command -v schemaui` (or just run the ask script —
+it exits with code 3 when the engine is missing).
+
+If missing, offer to install it — you can do this yourself, unattended:
+
+```bash
+bash scripts/install.sh        # macOS / Linux / FreeBSD: auto-detect & install
+pwsh scripts/install.ps1       # Windows / PowerShell 7+
+```
+
+Both default to a prebuilt-binary download (no toolchain needed) and support
+`--dry-run` / `-DryRun` to preview. Full channel list (brew, scoop, winget,
+cargo, manual): see `install.md` in this repository.
 
 ## Non-negotiables
 
@@ -120,13 +137,13 @@ select) before generating your own.
 
 ## Exit codes and fallback
 
-| Code | Meaning              | Your action                                |
-| ---- | -------------------- | ------------------------------------------ |
-| 0    | answer written       | read the file, continue                    |
-| 3    | schemaui not found   | fall back to plain text, tell the user     |
-| 4    | timeout (default 5m) | fall back to plain text, tell the user     |
-| 5    | cancelled / failed   | fall back to plain text, tell the user     |
-| 6    | bad schema/config    | fix the schema or fall back, tell the user |
+| Code | Meaning              | Your action                                                                                 |
+| ---- | -------------------- | ------------------------------------------------------------------------------------------- |
+| 0    | answer written       | read the file, continue                                                                     |
+| 3    | schemaui not found   | offer to run `scripts/install.sh` / `install.ps1`, then retry; else fall back to plain text |
+| 4    | timeout (default 5m) | fall back to plain text, tell the user                                                      |
+| 5    | cancelled / failed   | fall back to plain text, tell the user                                                      |
+| 6    | bad schema/config    | fix the schema or fall back, tell the user                                                  |
 
 Never hard-fail the task because a question could not be asked.
 
