@@ -358,6 +358,14 @@ def host_triple() -> str:
     pytest.skip(f"no host triple expectation for {system}")
 
 
+# install.sh targets macOS/Linux/FreeBSD; on Windows the supported installer
+# is install.ps1 (covered by test_install_ps1_dry_run_and_platform_guard).
+no_windows = pytest.mark.skipif(
+    sys.platform == "win32", reason="install.sh targets Unix; Windows uses install.ps1"
+)
+
+
+@no_windows
 def test_install_sh_dry_run_detects_platform():
     env = {**os.environ, "PATH": "/usr/bin:/bin"}  # hide any installed schemaui
     result = subprocess.run(
@@ -373,6 +381,7 @@ def test_install_sh_dry_run_detects_platform():
     assert "releases" in result.stdout  # resolved or fallback download URL
 
 
+@no_windows
 def test_install_sh_reports_existing_binary():
     if not BINARY:
         pytest.skip("schemaui binary not available")
