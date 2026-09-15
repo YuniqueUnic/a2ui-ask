@@ -11,6 +11,8 @@ you and the agent can re-read later.
 
 [English](./README.md) | [中文文档](./README.ZH.md)
 
+![a2ui-ask form UI — schema navigation, form editor, and live JSON preview](./docs/web-ui.png)
+
 ## Why
 
 Agent tool calls run in subprocesses with **no TTY** — a terminal prompt renders

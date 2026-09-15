@@ -9,10 +9,13 @@
 
 [English](./README.md) | [中文文档](./README.ZH.md)
 
+![a2ui-ask form UI — schema navigation, form editor, and live JSON preview](./docs/web-ui.png)
+
 ## 为什么需要它
 
 Agent 的工具调用跑在**没有 TTY** 的子进程里——终端提示符根本渲染不出 来，agent
-会卡在一个没人看得到的问题上干等。而聊天里喊出来的答案，刷过去 就没了，无法审计。
+会卡在一个没人看得到的问题上干等。而聊天里喊出来的答案，刷过去
+就没了，无法审计。
 
 `a2ui-ask` 两个问题一起解决：
 
@@ -97,8 +100,8 @@ Windows / PowerShell 7+:`pwsh scripts/ask.ps1 -Schema … -Title …`。没有 P
 
 ## Agent 从 SKILL.md 学到什么
 
-- **好好提问** —— 先翻代码库再开口;一个决策簇一张表单;每个问题都带推 荐答案 (写进
-  `default`);标题和描述用*你的*语言书写。
+- **好好提问** —— 先翻代码库再开口;一个决策簇一张表单;每个问题都带推 荐答案
+  (写进 `default`);标题和描述用*你的*语言书写。
 - **处处留逃生口** —— 每个选择都带「其他」选项 + 自由文本补充字段，你不
   会被迫塞进错误选项。
 - **全控件速查表** —— 文本、数值、布尔、单选/多选、oneOf 组合、嵌套对
@@ -109,11 +112,11 @@ Windows / PowerShell 7+:`pwsh scripts/ask.ps1 -Schema … -Title …`。没有 P
 [`examples/`](./examples/) 里可直接运行的表单 (每个都带 `.defaults.json`
 推荐答案):
 
-| 示例                                                                                | 场景                                              |
-| ----------------------------------------------------------------------------------- | ------------------------------------------------- |
-| [`env-schema.json`](./examples/env-schema.json)                                     | 最小 4 字段部署表单 —— 首次冒烟测试               |
+| 示例                                                                                | 场景                                                |
+| ----------------------------------------------------------------------------------- | --------------------------------------------------- |
+| [`env-schema.json`](./examples/env-schema.json)                                     | 最小 4 字段部署表单 —— 首次冒烟测试                 |
 | [`feature-brief.schema.json`](./examples/feature-brief.schema.json)                 | 11 问需求简报，覆盖全部控件类型 (英文)              |
-| [`invoice-reimbursement.schema.json`](./examples/invoice-reimbursement.schema.json) | 办公：发票报销处理 (中文，每个选择带「其他」逃生口)  |
+| [`invoice-reimbursement.schema.json`](./examples/invoice-reimbursement.schema.json) | 办公：发票报销处理 (中文，每个选择带「其他」逃生口) |
 | [`ecommerce-main-image.schema.json`](./examples/ecommerce-main-image.schema.json)   | 设计：电商主图 —— 尺寸、字号、颜色、渐变背景 (中文) |
 | [`seo-diagnosis.schema.json`](./examples/seo-diagnosis.schema.json)                 | SEO 排查：站点、问题、关键词、竞品 (中文)           |
 
@@ -127,8 +130,8 @@ ask.py --schema PATH|- [--config PATH] [--title T] [--description D]
 
 stdout 按序打印 (即时 flush):`SCHEMAUI_URL=…`、`SCHEMAUI_LAN_URL=…`(通
 配绑定时)、`SCHEMAUI_ANSWER=…`,随后是答案 JSON，最后是
-`SCHEMAUI_RESULT=<路径>`。退出码：`0` 成功 · `2` 用法错误 · `3` 找不到 schemaui ·
-`4` 超时 · `5` 取消/失败 · `6` 输入非法——agent 在任何非零退
+`SCHEMAUI_RESULT=<路径>`。退出码：`0` 成功 · `2` 用法错误 · `3` 找不到 schemaui
+· `4` 超时 · `5` 取消/失败 · `6` 输入非法——agent 在任何非零退
 出时回退纯文本提问。环境变量 `SCHEMAUI_BIN` 可覆盖引擎二进制查找。
 
 ## 开发
