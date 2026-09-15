@@ -134,7 +134,16 @@ def drive_session(url: str, payload: dict) -> None:
     "launcher",
     [
         [sys.executable, str(PY_SCRIPT)],
-        ["bash", str(SH_SCRIPT)],
+        pytest.param(
+            ["bash", str(SH_SCRIPT)],
+            # ask.sh targets macOS/Linux; on Windows the supported twin is
+            # ask.ps1 (covered by test_e2e_powershell_commit), so the Git-Bash
+            # path is intentionally out of the matrix.
+            marks=pytest.mark.skipif(
+                sys.platform == "win32", reason="ask.sh targets macOS/Linux; Windows uses ask.ps1"
+            ),
+            id="shell",
+        ),
     ],
     ids=["python", "shell"],
 )
