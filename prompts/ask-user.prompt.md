@@ -2,9 +2,9 @@
 
 When you need user input:
 
-1. If schemaui is available, ALWAYS prefer the a2ui-ask flow (Web form +
-   file output, see `ask.prompt.md`). It gives the user a real UI with
-   validation and preserves an audit trail.
+1. If schemaui is available, ALWAYS prefer the a2ui-ask flow (Web form + file
+   output, see `ask.prompt.md`). It gives the user a real UI with validation and
+   preserves an audit trail.
 2. Only if schemaui fails or is absent, use plain text — and tell the user you
    fell back.
 3. Batch all questions into one round. Never interrogate serially.

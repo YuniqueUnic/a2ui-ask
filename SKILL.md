@@ -12,20 +12,20 @@ description: >
 
 # a2ui-ask — collect user input via a browser form (file output)
 
-Interactive UI for AI agents: turn structured questions into browser forms.
-The rendering engine is the `schemaui` binary (`schemaui web`); this skill
-wraps it with scripts that handle binding, browser wakeup, timeout, and the
-file-output contract.
+Interactive UI for AI agents: turn structured questions into browser forms. The
+rendering engine is the `schemaui` binary (`schemaui web`); this skill wraps it
+with scripts that handle binding, browser wakeup, timeout, and the file-output
+contract.
 
 ## Non-negotiables
 
 1. Web form only, via `schemaui web`. Terminal prompts are forbidden — your
    process has no TTY, so a TUI renders nowhere and blocks forever.
-2. Bind `0.0.0.0` so the form is reachable from localhost, LAN, SSH tunnels,
-   and port-forwards.
+2. Bind `0.0.0.0` so the form is reachable from localhost, LAN, SSH tunnels, and
+   port-forwards.
 3. Output to a FILE under `.schemaui/answers/` — stdout-only is forbidden.
-4. Tell the user the URL and the answer file path in your response, in the
-   same turn as the tool call.
+4. Tell the user the URL and the answer file path in your response, in the same
+   turn as the tool call.
 5. Block on the subprocess; read the answer file when it exits.
 6. Fall back to plain text on any failure — never abort the task.
 7. `-o` is greedy: every other flag goes BEFORE `-o`; extra destinations are
@@ -34,36 +34,36 @@ file-output contract.
 ## Asking well (grill-me discipline, form edition)
 
 - **Explore before asking.** If the codebase, git history, or
-  `.schemaui/answers/` can answer the question, answer it yourself. The form
-  is for decisions only the user can make.
+  `.schemaui/answers/` can answer the question, answer it yourself. The form is
+  for decisions only the user can make.
 - **One form per decision cluster.** Batch the questions of one topic (e.g.
   "deployment config") into a single form; do not spawn ten forms for ten
   questions, and do not interrogate serially in chat either.
-- **Every question ships a recommended answer.** Put your recommendation in
-  the field's `default` so the user can confirm with one click instead of
-  typing. Say in chat what you recommended and why.
+- **Every question ships a recommended answer.** Put your recommendation in the
+  field's `default` so the user can confirm with one click instead of typing.
+  Say in chat what you recommended and why.
 - **Speak the user's language.** Write every `title` and `description` in the
   language the user is chatting in, and say in the description what the answer
   changes downstream ("drives whether we need rate limiting").
 - **Always leave an escape hatch.** Your options and defaults are guesses. For
-  every select, append an `其他`/`other` option plus a sibling
-  `<field>_custom` text input ("选了「其他」?在这里说明") so the user can
-  correct you instead of being forced into a wrong choice.
+  every select, append an `其他`/`other` option plus a sibling `<field>_custom`
+  text input ("选了「其他」?在这里说明") so the user can correct you instead of
+  being forced into a wrong choice.
 
 ## Question type → schema cheat sheet
 
-| You need              | Schema shape                                                           | Renders as                |
-| --------------------- | ---------------------------------------------------------------------- | ------------------------- |
-| short text input      | `{"type": "string", "minLength": …, "pattern": …}`                     | inline text field         |
-| number                | `{"type": "integer", "minimum": …, "maximum": …}`                      | numeric field with guards |
-| yes/no                | `{"type": "boolean"}`                                                  | toggle                    |
-| single select         | `{"type": "string", "enum": [...]}`                                    | popup selector            |
-| multi select          | `{"type": "array", "items": {"enum": [...]}, "uniqueItems": true}`     | multi-select popup        |
+| You need              | Schema shape                                                              | Renders as                |
+| --------------------- | ------------------------------------------------------------------------- | ------------------------- |
+| short text input      | `{"type": "string", "minLength": …, "pattern": …}`                        | inline text field         |
+| number                | `{"type": "integer", "minimum": …, "maximum": …}`                         | numeric field with guards |
+| yes/no                | `{"type": "boolean"}`                                                     | toggle                    |
+| single select         | `{"type": "string", "enum": [...]}`                                       | popup selector            |
+| multi select          | `{"type": "array", "items": {"enum": [...]}, "uniqueItems": true}`        | multi-select popup        |
 | select + escape hatch | `enum: [..., "其他"]` plus sibling `"<field>_custom": {"type": "string"}` | selector + text field     |
-| pick-one-with-config  | `{"oneOf": [{"title": "A", …}, {"title": "B", …}]}`                    | variant chooser + subform |
-| grouped fields        | `{"type": "object", "properties": {…}}`                                | nested section            |
-| list of records       | `{"type": "array", "items": {"type": "object", "properties": {…}}}`    | list + per-entry overlay  |
-| free-form key/value   | `{"type": "object", "additionalProperties": {"type": "string"}}`       | key/value editor          |
+| pick-one-with-config  | `{"oneOf": [{"title": "A", …}, {"title": "B", …}]}`                       | variant chooser + subform |
+| grouped fields        | `{"type": "object", "properties": {…}}`                                   | nested section            |
+| list of records       | `{"type": "array", "items": {"type": "object", "properties": {…}}}`       | list + per-entry overlay  |
+| free-form key/value   | `{"type": "object", "additionalProperties": {"type": "string"}}`          | key/value editor          |
 
 Read `examples/feature-brief.schema.json` (English, every control type) and
 `examples/invoice-reimbursement.schema.json` (Chinese, escape hatches on every
@@ -71,10 +71,9 @@ select) before generating your own.
 
 ## Steps
 
-1. Generate a draft-07 JSON Schema for the question (top-level
-   `type: object`; per-field `title` / `description` / `default`; `enum`,
-   `minimum` / `maximum`, nested `properties` as needed — see the cheat
-   sheet).
+1. Generate a draft-07 JSON Schema for the question (top-level `type: object`;
+   per-field `title` / `description` / `default`; `enum`, `minimum` / `maximum`,
+   nested `properties` as needed — see the cheat sheet).
 
 2. Run the helper script from this skill's directory — it spawns the server,
    prints the URL, opens the user's browser, enforces the timeout, and writes
@@ -92,8 +91,8 @@ select) before generating your own.
      --timeout 300
    ```
 
-   No Python? Use the twin for your platform — same flags, same stdout
-   contract: `bash scripts/ask.sh --schema …` (macOS/Linux) or
+   No Python? Use the twin for your platform — same flags, same stdout contract:
+   `bash scripts/ask.sh --schema …` (macOS/Linux) or
    `pwsh scripts/ask.ps1 -Schema …` (Windows / PowerShell 7+).
 
    Prefer piping the schema straight in (`--schema -`) when you just generated
@@ -102,15 +101,15 @@ select) before generating your own.
 
 3. In your response text, relay what the script prints:
 
-   > Form ready at http://localhost:8787 — I'll wait for you to fill it in.
-   > Your answers will be saved to `.schemaui/answers/<file>.json`.
+   > Form ready at http://localhost:8787 — I'll wait for you to fill it in. Your
+   > answers will be saved to `.schemaui/answers/<file>.json`.
 
-   On remote/headless runs pass `--no-open` and relay `SCHEMAUI_LAN_URL` (or
-   the forwarded URL) instead of opening a browser locally.
+   On remote/headless runs pass `--no-open` and relay `SCHEMAUI_LAN_URL` (or the
+   forwarded URL) instead of opening a browser locally.
 
-4. The script blocks until the user clicks **Save & Exit**. On exit 0 it
-   prints the answer JSON and `SCHEMAUI_RESULT=<path>`. Read the answer file
-   and continue the task, citing field paths:
+4. The script blocks until the user clicks **Save & Exit**. On exit 0 it prints
+   the answer JSON and `SCHEMAUI_RESULT=<path>`. Read the answer file and
+   continue the task, citing field paths:
 
    > Per `.schemaui/answers/deploy-config-20260916-101500.json`:
    > `environment = staging`, `replicas = 3`.
@@ -146,8 +145,8 @@ schemaui web \
 The server announces `<title> schemaui UI available at http://<addr>/` on
 stderr. Port 8787 busy → retry once with `--port 0` and parse the `http://…`
 line from stderr. Optional stdout echo: append `-` after the answer path
-(`-o <file> -`) — only when your runtime shows tool output live and the JSON
-is small; default is file-only.
+(`-o <file> -`) — only when your runtime shows tool output live and the JSON is
+small; default is file-only.
 
 ## Sensitive input
 
@@ -164,13 +163,13 @@ something similar. Reuse a prior answer as defaults via `--config`.
 Five runnable forms live in `examples/` (each with a `.defaults.json` carrying
 the recommended answers):
 
-| Example                          | Scenario                                                    |
-| -------------------------------- | ----------------------------------------------------------- |
-| `env-schema.json`                | minimal 4-field deploy form — first smoke test              |
-| `feature-brief.schema.json`      | 11-question requirements brief, every control type (EN)     |
-| `invoice-reimbursement.schema.json` | office: invoice & expense reimbursement (中文, escape hatches) |
-| `ecommerce-main-image.schema.json` | design: e-commerce hero image specs — sizes, fonts, colors, oneOf backgrounds (中文) |
-| `seo-diagnosis.schema.json`      | SEO triage: site, issues, keywords, competitors (中文)      |
+| Example                             | Scenario                                                                             |
+| ----------------------------------- | ------------------------------------------------------------------------------------ |
+| `env-schema.json`                   | minimal 4-field deploy form — first smoke test                                       |
+| `feature-brief.schema.json`         | 11-question requirements brief, every control type (EN)                              |
+| `invoice-reimbursement.schema.json` | office: invoice & expense reimbursement (中文, escape hatches)                       |
+| `ecommerce-main-image.schema.json`  | design: e-commerce hero image specs — sizes, fonts, colors, oneOf backgrounds (中文) |
+| `seo-diagnosis.schema.json`         | SEO triage: site, issues, keywords, competitors (中文)                               |
 
 ```bash
 python3 scripts/ask.py \

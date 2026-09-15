@@ -32,8 +32,8 @@ NOT ask in plain text. Spawn a schemaui Web form and write the result to a file.
 ## Preferred path: the helper script
 
 This skill ships `scripts/ask.py` (plus `ask.sh` and `ask.ps1` twins for
-shell-only and Windows/PowerShell environments) which handles binding,
-browser wakeup, URL printing, timeout, and the file contract for you:
+shell-only and Windows/PowerShell environments) which handles binding, browser
+wakeup, URL printing, timeout, and the file contract for you:
 
 ```bash
 python3 scripts/ask.py \
