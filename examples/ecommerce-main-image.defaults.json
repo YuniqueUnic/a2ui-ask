@@ -1,0 +1,22 @@
+{
+  "platforms": ["淘宝/天猫", "京东"],
+  "image_size": "800x800(方图)",
+  "headline": "新品上市 限时 8 折",
+  "headline_font_size": 88,
+  "headline_color": "#FF4400",
+  "font_family": "黑体(粗)",
+  "background": {
+    "kind": "渐变",
+    "color_from": "#FFE5D9",
+    "color_to": "#FF6B35",
+    "angle": 135
+  },
+  "promo_badge": {
+    "enabled": true,
+    "text": "限时特惠",
+    "color": "#FF0000"
+  },
+  "batch_count": 20,
+  "output_formats": ["JPG", "WebP"],
+  "brand_assets": { "logo位置": "右上角", "水印": "无" }
+}

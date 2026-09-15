@@ -1,0 +1,184 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "电商主图设计需求",
+  "description": "设计场景示例:Agent 在批量生成/处理电商主图前需要确认的设计参数。字号、颜色、尺寸都有推荐值;平台或风格不在列表里时选「其他」并补充说明。",
+  "type": "object",
+  "required": ["platforms", "image_size", "headline", "headline_font_size", "headline_color"],
+  "properties": {
+    "platforms": {
+      "type": "array",
+      "title": "投放平台",
+      "description": "多选:不同平台的尺寸规范和审核规则不同,会分别出图。",
+      "items": {
+        "type": "string",
+        "enum": ["淘宝/天猫", "京东", "拼多多", "抖音小店", "Amazon", "其他"]
+      },
+      "uniqueItems": true,
+      "minItems": 1,
+      "default": ["淘宝/天猫", "京东"]
+    },
+    "platforms_custom": {
+      "type": "string",
+      "title": "投放平台 · 自定义说明",
+      "description": "平台列表里没有你要的?选「其他」后在这里写,例如「小红书商城」。"
+    },
+    "image_size": {
+      "type": "string",
+      "title": "图片尺寸",
+      "description": "单选:主图标准尺寸;选「自定义」后在下方填写宽高。",
+      "enum": ["800x800(方图)", "1200x1200(高清方图)", "750x1000(长图)", "自定义"],
+      "default": "800x800(方图)"
+    },
+    "custom_width": {
+      "type": "integer",
+      "title": "自定义宽度(px)",
+      "description": "仅当尺寸选「自定义」时生效。",
+      "minimum": 100,
+      "maximum": 4000,
+      "default": 800
+    },
+    "custom_height": {
+      "type": "integer",
+      "title": "自定义高度(px)",
+      "description": "仅当尺寸选「自定义」时生效。",
+      "minimum": 100,
+      "maximum": 4000,
+      "default": 800
+    },
+    "headline": {
+      "type": "string",
+      "title": "主标题文案",
+      "description": "主图最显眼的一行字,建议不超过 12 个字。",
+      "minLength": 1,
+      "maxLength": 30,
+      "default": "新品上市 限时 8 折"
+    },
+    "headline_font_size": {
+      "type": "integer",
+      "title": "标题字号(px)",
+      "description": "800px 方图推荐 72-96;字号过小在手机端看不清。",
+      "minimum": 12,
+      "maximum": 300,
+      "default": 88
+    },
+    "headline_color": {
+      "type": "string",
+      "title": "标题颜色",
+      "description": "十六进制色值,例如 #FF4400;要与背景拉开对比度。",
+      "pattern": "^#[0-9a-fA-F]{6}$",
+      "default": "#FF4400"
+    },
+    "font_family": {
+      "type": "string",
+      "title": "字体风格",
+      "description": "单选:电商主图常用黑体系,衬线体适合高端品类。",
+      "enum": ["黑体(粗)", "黑体(细)", "宋体/衬线", "圆体", "手写体", "其他"],
+      "default": "黑体(粗)"
+    },
+    "font_family_custom": {
+      "type": "string",
+      "title": "字体风格 · 自定义说明",
+      "description": "选了「其他」时填写具体字体名,例如「站酷高端黑」。"
+    },
+    "background": {
+      "title": "背景风格",
+      "description": "组合选择:先选类型,纯色/渐变再填色值。",
+      "oneOf": [
+        {
+          "title": "纯色背景",
+          "type": "object",
+          "properties": {
+            "kind": { "type": "string", "const": "纯色" },
+            "color": {
+              "type": "string",
+              "title": "背景色值",
+              "pattern": "^#[0-9a-fA-F]{6}$",
+              "default": "#FFFFFF"
+            }
+          },
+          "required": ["kind", "color"]
+        },
+        {
+          "title": "渐变背景",
+          "type": "object",
+          "properties": {
+            "kind": { "type": "string", "const": "渐变" },
+            "color_from": {
+              "type": "string",
+              "title": "起始色",
+              "pattern": "^#[0-9a-fA-F]{6}$",
+              "default": "#FFE5D9"
+            },
+            "color_to": {
+              "type": "string",
+              "title": "结束色",
+              "pattern": "^#[0-9a-fA-F]{6}$",
+              "default": "#FF6B35"
+            },
+            "angle": {
+              "type": "integer",
+              "title": "渐变角度",
+              "minimum": 0,
+              "maximum": 360,
+              "default": 135
+            }
+          },
+          "required": ["kind", "color_from", "color_to"]
+        },
+        {
+          "title": "场景图背景",
+          "type": "object",
+          "properties": {
+            "kind": { "type": "string", "const": "场景图" },
+            "scene_prompt": {
+              "type": "string",
+              "title": "场景描述",
+              "description": "用一句话描述想要的场景,例如「ins 风桌面,左侧留白」。",
+              "default": "简约桌面场景,自然光,左侧留白"
+            }
+          },
+          "required": ["kind", "scene_prompt"]
+        }
+      ]
+    },
+    "promo_badge": {
+      "type": "object",
+      "title": "促销标签",
+      "description": "嵌套配置:是否加角标,以及角标文案与颜色。",
+      "properties": {
+        "enabled": { "type": "boolean", "title": "启用促销角标", "default": true },
+        "text": { "type": "string", "title": "角标文案", "default": "限时特惠" },
+        "color": {
+          "type": "string",
+          "title": "角标颜色",
+          "pattern": "^#[0-9a-fA-F]{6}$",
+          "default": "#FF0000"
+        }
+      }
+    },
+    "batch_count": {
+      "type": "integer",
+      "title": "批量出图张数",
+      "description": "按 SKU 数量批量生成时的总张数。",
+      "minimum": 1,
+      "maximum": 500,
+      "default": 20
+    },
+    "output_formats": {
+      "type": "array",
+      "title": "输出格式",
+      "description": "多选:JPG 体积小,PNG 支持透明,WebP 兼顾两者。",
+      "items": { "type": "string", "enum": ["JPG", "PNG", "WebP"] },
+      "uniqueItems": true,
+      "minItems": 1,
+      "default": ["JPG", "WebP"]
+    },
+    "brand_assets": {
+      "type": "object",
+      "title": "品牌元素",
+      "description": "键值对:例如 logo位置=右上角、水印=无。",
+      "additionalProperties": { "type": "string" },
+      "default": { "logo位置": "右上角", "水印": "无" }
+    }
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "name": "a2ui-ask",
+  "version": "0.1.0",
+  "description": "Interactive UI for AI agents — turn structured questions into browser forms.",
+  "keywords": [
+    "a2ui",
+    "agent-ui",
+    "ai-agent",
+    "skill",
+    "claude-code",
+    "codex",
+    "cursor",
+    "json-schema",
+    "form",
+    "schemaui"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/YuniqueUnic/a2ui-ask.git"
+  },
+  "homepage": "https://github.com/YuniqueUnic/a2ui-ask",
+  "files": [
+    "SKILL.md",
+    "scripts/",
+    "prompts/",
+    "examples/",
+    "README.md",
+    "README.ZH.md",
+    "LICENSE"
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
+}

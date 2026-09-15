@@ -1,0 +1,170 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Feature Requirements Brief",
+  "description": "Example of an agent grilling its user before building a feature: every question ships with a recommended answer as the default. Covers every control type schemaui renders.",
+  "type": "object",
+  "required": ["feature_name", "target_release", "platforms", "storage"],
+  "properties": {
+    "feature_name": {
+      "type": "string",
+      "title": "Feature name",
+      "description": "Short identifier used in branches, flags, and changelogs (kebab-case).",
+      "minLength": 3,
+      "pattern": "^[a-z][a-z0-9-]*$",
+      "default": "team-invites"
+    },
+    "one_liner": {
+      "type": "string",
+      "title": "One-liner",
+      "description": "One sentence: who benefits and why now.",
+      "default": "Let workspace admins invite teammates by email so onboarding stops going through support."
+    },
+    "target_release": {
+      "type": "string",
+      "title": "Target release",
+      "description": "Single-select: which train should this ship on?",
+      "enum": ["next-minor", "next-major", "patch", "unscheduled"],
+      "default": "next-minor"
+    },
+    "platforms": {
+      "type": "array",
+      "title": "Platforms",
+      "description": "Multi-select: every surface that must ship this feature.",
+      "items": {
+        "type": "string",
+        "enum": ["macos", "linux", "windows", "web", "ios", "android"]
+      },
+      "uniqueItems": true,
+      "minItems": 1,
+      "default": ["macos", "linux", "windows"]
+    },
+    "expected_daily_users": {
+      "type": "integer",
+      "title": "Expected daily users",
+      "description": "Order-of-magnitude guess; drives whether we need rate limiting.",
+      "minimum": 1,
+      "maximum": 1000000,
+      "default": 5000
+    },
+    "breaking_change": {
+      "type": "boolean",
+      "title": "Breaking change",
+      "description": "Does any existing API or config file change meaning?",
+      "default": false
+    },
+    "owner_email": {
+      "type": "string",
+      "title": "Owner email",
+      "description": "Who approves the rollout and gets paged when it burns.",
+      "format": "email",
+      "default": "team-lead@example.com"
+    },
+    "storage": {
+      "title": "Storage backend",
+      "description": "Complex composition: pick one variant, then fill only its fields.",
+      "oneOf": [
+        {
+          "title": "PostgreSQL",
+          "type": "object",
+          "properties": {
+            "kind": { "type": "string", "const": "postgres" },
+            "connection_string": {
+              "type": "string",
+              "description": "postgres://user@host:5432/db"
+            },
+            "pool_size": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 10
+            }
+          },
+          "required": ["kind", "connection_string"]
+        },
+        {
+          "title": "SQLite",
+          "type": "object",
+          "properties": {
+            "kind": { "type": "string", "const": "sqlite" },
+            "file_path": {
+              "type": "string",
+              "default": "./data/app.db"
+            }
+          },
+          "required": ["kind"]
+        },
+        {
+          "title": "In-memory (ephemeral)",
+          "type": "object",
+          "properties": {
+            "kind": { "type": "string", "const": "memory" },
+            "max_entries": {
+              "type": "integer",
+              "minimum": 100,
+              "default": 10000
+            }
+          },
+          "required": ["kind"]
+        }
+      ]
+    },
+    "cache": {
+      "type": "object",
+      "title": "Cache",
+      "description": "Nested section: collapses into its own tab group.",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": true
+        },
+        "backend": {
+          "type": "string",
+          "enum": ["memory", "redis"],
+          "default": "memory"
+        },
+        "ttl_seconds": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 86400,
+          "default": 300
+        }
+      }
+    },
+    "endpoints": {
+      "type": "array",
+      "title": "API endpoints",
+      "description": "List editor: each entry opens its own overlay form.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "method": {
+            "type": "string",
+            "enum": ["GET", "POST", "PUT", "DELETE"],
+            "default": "POST"
+          },
+          "path": {
+            "type": "string",
+            "pattern": "^/[a-z0-9/_-]*$",
+            "default": "/api/invites"
+          },
+          "auth_required": {
+            "type": "boolean",
+            "default": true
+          }
+        },
+        "required": ["method", "path"]
+      },
+      "default": [
+        { "method": "POST", "path": "/api/invites", "auth_required": true }
+      ]
+    },
+    "labels": {
+      "type": "object",
+      "title": "Labels",
+      "description": "Key/value map: free-form tags for dashboards and cost tracking.",
+      "propertyNames": { "pattern": "^[a-z][a-z0-9_]*$" },
+      "additionalProperties": { "type": "string" },
+      "default": { "team": "growth", "cost-center": "eng" }
+    }
+  }
+}

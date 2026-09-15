@@ -1,0 +1,47 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Deployment Environment",
+  "type": "object",
+  "required": ["environment", "replicas"],
+  "properties": {
+    "environment": {
+      "type": "string",
+      "title": "Target environment",
+      "description": "Where should this deployment go?",
+      "enum": ["dev", "staging", "prod"],
+      "default": "staging"
+    },
+    "replicas": {
+      "type": "integer",
+      "title": "Replica count",
+      "description": "How many instances to run (1-10).",
+      "minimum": 1,
+      "maximum": 10,
+      "default": 2
+    },
+    "enable_tls": {
+      "type": "boolean",
+      "title": "Enable TLS",
+      "description": "Terminate HTTPS at the ingress.",
+      "default": true
+    },
+    "runtime": {
+      "type": "object",
+      "title": "Runtime",
+      "properties": {
+        "host": {
+          "type": "string",
+          "title": "Bind host",
+          "default": "0.0.0.0"
+        },
+        "port": {
+          "type": "integer",
+          "title": "HTTP port",
+          "minimum": 1024,
+          "maximum": 65535,
+          "default": 8080
+        }
+      }
+    }
+  }
+}

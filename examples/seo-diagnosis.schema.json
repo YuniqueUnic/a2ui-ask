@@ -1,0 +1,138 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "网站 SEO 问题排查",
+  "description": "SEO 场景示例:Agent 在给出诊断方案前需要先摸清站点现状。问题描述越具体,诊断越准;选项覆盖不到的情况选「其他」并补充。",
+  "type": "object",
+  "required": ["site_url", "site_type", "main_issues", "search_engines"],
+  "properties": {
+    "site_url": {
+      "type": "string",
+      "title": "网站地址",
+      "description": "完整 URL,例如 https://example.com;诊断会以此为准抓取页面。",
+      "pattern": "^https?://[^\\s]+$",
+      "default": "https://example.com"
+    },
+    "site_type": {
+      "type": "string",
+      "title": "站点类型",
+      "description": "单选:不同类型站点的 SEO 打法差异很大。",
+      "enum": ["企业官网", "电商/商城", "博客/内容站", "SaaS 产品站", "论坛/社区", "其他"],
+      "default": "企业官网"
+    },
+    "site_type_custom": {
+      "type": "string",
+      "title": "站点类型 · 自定义说明",
+      "description": "选了「其他」时填写,例如「文档站」「导航站」。"
+    },
+    "main_issues": {
+      "type": "array",
+      "title": "当前最头疼的问题",
+      "description": "多选:按优先级排查,选中的每一项都会单独出诊断。",
+      "items": {
+        "type": "string",
+        "enum": [
+          "收录量下降",
+          "关键词排名下降",
+          "自然流量下降",
+          "抓取异常/抓取频次低",
+          "有流量没转化",
+          "新页面收录慢",
+          "其他"
+        ]
+      },
+      "uniqueItems": true,
+      "minItems": 1,
+      "default": ["收录量下降", "新页面收录慢"]
+    },
+    "main_issues_custom": {
+      "type": "string",
+      "title": "问题 · 自定义说明",
+      "description": "问题列表里没有的,选「其他」后在这里详细描述现象和时间点。"
+    },
+    "target_keywords": {
+      "type": "array",
+      "title": "目标关键词",
+      "description": "列表:每条一个核心词,最多 10 个;诊断会逐个检查排名与落地页。",
+      "items": { "type": "string", "minLength": 1 },
+      "maxItems": 10,
+      "default": ["JSON Schema 表单", "AI 表单生成"]
+    },
+    "search_engines": {
+      "type": "array",
+      "title": "目标搜索引擎",
+      "description": "多选:百度和 Google 的收录机制差异很大,策略分开给。",
+      "items": { "type": "string", "enum": ["百度", "Google", "Bing", "搜狗", "360"] },
+      "uniqueItems": true,
+      "minItems": 1,
+      "default": ["百度", "Google"]
+    },
+    "target_market": {
+      "type": "string",
+      "title": "目标市场语言",
+      "description": "单选:影响 hreflang 与内容策略建议。",
+      "enum": ["中文(国内)", "中文(含港澳台)", "英文", "多语言", "其他"],
+      "default": "中文(国内)"
+    },
+    "target_market_custom": {
+      "type": "string",
+      "title": "目标市场 · 自定义说明",
+      "description": "选了「其他」时填写,例如「日语市场」。"
+    },
+    "recent_changes": {
+      "type": "object",
+      "title": "近期改动",
+      "description": "嵌套:改版、迁移、换域名是排名波动最常见的诱因。",
+      "properties": {
+        "has_changes": {
+          "type": "boolean",
+          "title": "近 3 个月有改版/迁移/换域名",
+          "default": false
+        },
+        "change_notes": {
+          "type": "string",
+          "title": "改动说明",
+          "description": "有改动时填写:什么时候改了什么,例如「8 月全站启用了 HTTPS」。"
+        }
+      }
+    },
+    "daily_uv": {
+      "type": "string",
+      "title": "日均自然搜索 UV 量级",
+      "description": "单选:量级决定诊断的颗粒度。",
+      "enum": ["100 以下", "100-1000", "1000-10000", "10000 以上"],
+      "default": "100-1000"
+    },
+    "has_search_console": {
+      "type": "boolean",
+      "title": "有 Search Console / 站长平台权限",
+      "description": "有权限可以拿到抓取与索引的一手数据,诊断会准很多。",
+      "default": true
+    },
+    "competitors": {
+      "type": "array",
+      "title": "主要竞争对手",
+      "description": "列表:每条一个域名;用于对比内容差距与外链差距。",
+      "items": { "type": "string", "pattern": "^[a-z0-9.-]+\\.[a-z]{2,}$" },
+      "maxItems": 5,
+      "default": ["competitor-a.com"]
+    },
+    "tech_stack": {
+      "type": "string",
+      "title": "建站技术栈",
+      "description": "单选:技术栈决定可落地的优化手段(如 sitemap、SSR)。",
+      "enum": ["WordPress", "自研前后端", "静态站(SSG)", "Shopify", "SaaS 建站", "其他"],
+      "default": "自研前后端"
+    },
+    "tech_stack_custom": {
+      "type": "string",
+      "title": "技术栈 · 自定义说明",
+      "description": "选了「其他」时填写,例如「Next.js + Headless CMS」。"
+    },
+    "goal": {
+      "type": "string",
+      "title": "期望目标",
+      "description": "一句话说清三个月后想看到什么,例如「核心词进前 20,收录恢复到 5000」。",
+      "default": "核心关键词进入百度前 20,新页面一周内收录"
+    }
+  }
+}

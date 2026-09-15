@@ -1,0 +1,17 @@
+{
+  "expense_type": "差旅",
+  "invoice_count": 3,
+  "total_amount": 1280.5,
+  "currency": "人民币 CNY",
+  "invoice_date": "2026-09-01",
+  "is_electronic": true,
+  "invoice_title": "企业(含税号)",
+  "tax_number": "91310000MA1FL0000A",
+  "project_code": "部门公共",
+  "urgent": false,
+  "attachments": [
+    { "kind": "发票", "filename": "invoice-001.pdf" },
+    { "kind": "支付记录", "filename": "payment.png" }
+  ],
+  "labels": { "季度": "Q3", "部门": "研发" }
+}

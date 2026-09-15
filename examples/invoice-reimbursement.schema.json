@@ -1,0 +1,124 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "发票报销处理",
+  "description": "办公场景示例:Agent 在帮你整理报销单之前需要确认的信息。每个选项都带推荐默认值;选项不符合实际情况时,选「其他」并在对应的自定义输入框里说明。",
+  "type": "object",
+  "required": ["expense_type", "invoice_count", "total_amount", "invoice_title"],
+  "properties": {
+    "expense_type": {
+      "type": "string",
+      "title": "报销类型",
+      "description": "决定走哪条审批流。都不符合就选「其他」并在下方自定义说明里补充。",
+      "enum": ["差旅", "办公采购", "客户招待", "培训学习", "其他"],
+      "default": "差旅"
+    },
+    "expense_type_custom": {
+      "type": "string",
+      "title": "报销类型 · 自定义说明",
+      "description": "上一题选了「其他」时必填:一句话说明这是什么费用。"
+    },
+    "invoice_count": {
+      "type": "integer",
+      "title": "发票张数",
+      "description": "本次报销包含的发票总数(含电子发票)。",
+      "minimum": 1,
+      "maximum": 200,
+      "default": 3
+    },
+    "total_amount": {
+      "type": "number",
+      "title": "报销总金额",
+      "description": "所有发票的价税合计总额,单位为元。",
+      "minimum": 0,
+      "default": 1280.5
+    },
+    "currency": {
+      "type": "string",
+      "title": "币种",
+      "description": "外币发票需要附汇率截图。",
+      "enum": ["人民币 CNY", "美元 USD", "欧元 EUR", "日元 JPY", "其他"],
+      "default": "人民币 CNY"
+    },
+    "currency_custom": {
+      "type": "string",
+      "title": "币种 · 自定义说明",
+      "description": "币种选了「其他」时填写,例如「港币 HKD」。"
+    },
+    "invoice_date": {
+      "type": "string",
+      "title": "最早一张发票的开具日期",
+      "description": "格式 YYYY-MM-DD;超过 90 天的发票需要额外说明。",
+      "format": "date",
+      "default": "2026-09-01"
+    },
+    "is_electronic": {
+      "type": "boolean",
+      "title": "全部为电子发票",
+      "description": "电子发票直接上传 PDF;纸质发票需要拍照并邮寄原件。",
+      "default": true
+    },
+    "invoice_title": {
+      "type": "string",
+      "title": "发票抬头类型",
+      "description": "抬头开错会导致整张发票无法报销。",
+      "enum": ["企业(含税号)", "个人", "其他"],
+      "default": "企业(含税号)"
+    },
+    "tax_number": {
+      "type": "string",
+      "title": "企业税号",
+      "description": "抬头为企业的必填;15-20 位统一社会信用代码。",
+      "pattern": "^[0-9A-HJ-NPQRTUWXY]{15,20}$",
+      "default": "91310000MA1FL0000A"
+    },
+    "project_code": {
+      "type": "string",
+      "title": "费用归属项目",
+      "description": "费用计入哪个项目成本中心;不知道就写「部门公共」。",
+      "default": "部门公共"
+    },
+    "urgent": {
+      "type": "boolean",
+      "title": "加急处理",
+      "description": "加急单会在 1 个工作日内审批,但需要部门负责人额外确认。",
+      "default": false
+    },
+    "attachments": {
+      "type": "array",
+      "title": "附件清单",
+      "description": "每条记录对应一个附件:发票 PDF、行程单、审批截图等。",
+      "items": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "title": "附件类型",
+            "enum": ["发票", "行程单", "支付记录", "审批截图", "其他"],
+            "default": "发票"
+          },
+          "kind_custom": {
+            "type": "string",
+            "title": "附件类型 · 自定义说明"
+          },
+          "filename": {
+            "type": "string",
+            "title": "文件名",
+            "default": "invoice-001.pdf"
+          }
+        },
+        "required": ["kind", "filename"]
+      },
+      "default": [
+        { "kind": "发票", "filename": "invoice-001.pdf" },
+        { "kind": "支付记录", "filename": "payment.png" }
+      ]
+    },
+    "labels": {
+      "type": "object",
+      "title": "自定义标签",
+      "description": "键值对,方便财务按维度统计,例如 季度=Q3。",
+      "additionalProperties": { "type": "string" },
+      "default": { "季度": "Q3", "部门": "研发" }
+    }
+  }
+}

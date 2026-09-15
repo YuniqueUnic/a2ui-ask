@@ -1,0 +1,16 @@
+{
+  "site_url": "https://example.com",
+  "site_type": "企业官网",
+  "main_issues": ["收录量下降", "新页面收录慢"],
+  "target_keywords": ["JSON Schema 表单", "AI 表单生成"],
+  "search_engines": ["百度", "Google"],
+  "target_market": "中文(国内)",
+  "recent_changes": {
+    "has_changes": false
+  },
+  "daily_uv": "100-1000",
+  "has_search_console": true,
+  "competitors": ["competitor-a.com"],
+  "tech_stack": "自研前后端",
+  "goal": "核心关键词进入百度前 20,新页面一周内收录"
+}

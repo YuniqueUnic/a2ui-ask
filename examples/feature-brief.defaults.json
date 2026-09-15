@@ -1,0 +1,25 @@
+{
+  "feature_name": "team-invites",
+  "one_liner": "Let workspace admins invite teammates by email so onboarding stops going through support.",
+  "target_release": "next-minor",
+  "platforms": ["macos", "linux", "windows"],
+  "expected_daily_users": 5000,
+  "breaking_change": false,
+  "owner_email": "team-lead@example.com",
+  "storage": {
+    "kind": "sqlite",
+    "file_path": "./data/app.db"
+  },
+  "cache": {
+    "enabled": true,
+    "backend": "memory",
+    "ttl_seconds": 300
+  },
+  "endpoints": [
+    { "method": "POST", "path": "/api/invites", "auth_required": true }
+  ],
+  "labels": {
+    "team": "growth",
+    "cost-center": "eng"
+  }
+}
