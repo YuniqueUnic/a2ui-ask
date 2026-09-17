@@ -83,5 +83,8 @@ schemaui web --schema examples/env-schema.json --port 8787 -o answer.json
   is missing. Offer to run the auto-installer, then retry the form.
 - If the binary lives somewhere unusual, point the scripts at it with
   `SCHEMAUI_BIN=/path/to/schemaui`.
-- The scripts only need the `web` subcommand; any recent `schemaui-cli` release
-  works.
+- The scripts only need the `web` subcommand, but the `x-visible-when` and
+  `x-multiline` hints the skill relies on need `schemaui-cli` **≥ 0.7.7**
+  (`schemaui` ≥ 0.13.0). Older engines ignore unknown `x-` keywords: the form
+  still runs, it just shows every field and single-line inputs. If a form looks
+  unstyled that way, the engine is the thing to upgrade.
