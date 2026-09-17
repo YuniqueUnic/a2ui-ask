@@ -114,7 +114,9 @@ without Python: `bash scripts/ask.sh --schema …`.
   cluster; every question carries a recommended answer as its `default`;
   titles/descriptions written in _your_ language.
 - **Escape hatches everywhere** — every select offers `其他`/`other` plus a
-  free-text companion field, so you're never forced into a wrong option.
+  free-text companion field, so you're never forced into a wrong option. The
+  companion only appears once you actually pick the escape option, and
+  paragraph-length answers get a multi-line box instead of a one-line input.
 - **A full control cheat sheet** — text, number, boolean, single/multi select,
   oneOf compositions, nested objects, record lists, key/value maps.
 
@@ -126,7 +128,7 @@ the matching `.defaults.json`):
 | Example                                                                             | Scenario                                                                  |
 | ----------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
 | [`env-schema.json`](./examples/env-schema.json)                                     | minimal 4-field deploy form — first smoke test                            |
-| [`feature-brief.schema.json`](./examples/feature-brief.schema.json)                 | 11-question requirements brief using every control type (EN)              |
+| [`feature-brief.schema.json`](./examples/feature-brief.schema.json)                 | 12-question requirements brief using every control type (EN)              |
 | [`invoice-reimbursement.schema.json`](./examples/invoice-reimbursement.schema.json) | office: invoice & expense reimbursement (中文)                            |
 | [`ecommerce-main-image.schema.json`](./examples/ecommerce-main-image.schema.json)   | design: e-commerce hero images — sizes, fonts, colors, backgrounds (中文) |
 | [`seo-diagnosis.schema.json`](./examples/seo-diagnosis.schema.json)                 | SEO triage: site, issues, keywords, competitors (中文)                    |

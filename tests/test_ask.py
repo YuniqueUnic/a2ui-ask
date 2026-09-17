@@ -212,9 +212,19 @@ def test_e2e_powershell_commit(tmp_path: Path):
     assert json.loads(answer.read_text()) == ANSWER
 
 
+def collect_nodes(nodes: list[dict]) -> list[dict]:
+    """Flatten a UiAst node tree, descending into object children."""
+    flat: list[dict] = []
+    for node in nodes:
+        flat.append(node)
+        if node["kind"].get("type") == "object":
+            flat.extend(collect_nodes(node["kind"]["children"]))
+    return flat
+
+
 @needs_binary
 def test_e2e_feature_brief_full_control_showcase(tmp_path: Path):
-    """The rich 11-question example loads and round-trips every control type."""
+    """The rich 12-question example loads and round-trips every control type."""
     proc = subprocess.Popen(
         [
             sys.executable,
@@ -244,8 +254,21 @@ def test_e2e_feature_brief_full_control_showcase(tmp_path: Path):
         ]
         # single/multi select, text, number, boolean, oneOf composition,
         # nested object, list of records, key/value map — all present
-        assert len(session["ui_ast"]["roots"]) == 11
+        assert len(session["ui_ast"]["roots"]) == 12
         assert {"field", "array", "composite", "object", "key_value"} <= set(kinds)
+
+        # presentation hints survive the trip to the browser: the escape-hatch
+        # input stays hidden until the sibling it names matches, and long-form
+        # answers render as a text area.
+        by_pointer = {node["pointer"]: node for node in collect_nodes(session["ui_ast"]["roots"])}
+        assert by_pointer["/breaking_change_notes"]["visible_when"] == {
+            "field": "breaking_change",
+            "op": "equals",
+            "value": True,
+        }
+        assert by_pointer["/breaking_change_notes"]["kind"]["multiline"] is True
+        assert by_pointer["/cache/ttl_seconds"]["visible_when"]["field"] == "enabled"
+        assert by_pointer["/owner_email"]["visible_when"] is None
 
         answer = tmp_path / read_until(proc, "SCHEMAUI_ANSWER=").strip().split("=", 1)[1]
         drive_session(url, FEATURE_BRIEF_ANSWER)

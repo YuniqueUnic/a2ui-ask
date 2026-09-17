@@ -52,6 +52,13 @@
       "description": "Does any existing API or config file change meaning?",
       "default": false
     },
+    "breaking_change_notes": {
+      "type": "string",
+      "title": "What breaks",
+      "description": "Only asked once you flag a breaking change: what breaks, and how do existing users migrate?",
+      "x-visible-when": { "field": "breaking_change", "op": "equals", "value": true },
+      "x-multiline": true
+    },
     "owner_email": {
       "type": "string",
       "title": "Owner email",
@@ -111,7 +118,7 @@
     "cache": {
       "type": "object",
       "title": "Cache",
-      "description": "Nested section: collapses into its own tab group.",
+      "description": "Nested section: collapses into its own tab group. Turning it off hides the settings it owns.",
       "properties": {
         "enabled": {
           "type": "boolean",
@@ -120,13 +127,15 @@
         "backend": {
           "type": "string",
           "enum": ["memory", "redis"],
-          "default": "memory"
+          "default": "memory",
+          "x-visible-when": { "field": "enabled", "op": "equals", "value": true }
         },
         "ttl_seconds": {
           "type": "integer",
           "minimum": 1,
           "maximum": 86400,
-          "default": 300
+          "default": 300,
+          "x-visible-when": { "field": "enabled", "op": "equals", "value": true }
         }
       }
     },

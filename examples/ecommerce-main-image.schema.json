@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "电商主图设计需求",
-  "description": "设计场景示例:Agent 在批量生成/处理电商主图前需要确认的设计参数。字号、颜色、尺寸都有推荐值;平台或风格不在列表里时选「其他」并补充说明。",
+  "description": "设计场景示例:Agent 在批量生成/处理电商主图前需要确认的设计参数。字号、颜色、尺寸都有推荐值;平台或风格不在列表里时选「其他」,对应的自定义输入框才会出现。",
   "type": "object",
   "required": ["platforms", "image_size", "headline", "headline_font_size", "headline_color"],
   "properties": {
@@ -20,7 +20,8 @@
     "platforms_custom": {
       "type": "string",
       "title": "投放平台 · 自定义说明",
-      "description": "平台列表里没有你要的?选「其他」后在这里写,例如「小红书商城」。"
+      "description": "平台列表里没有你要的?选「其他」后在这里写,例如「小红书商城」。",
+      "x-visible-when": { "field": "platforms", "op": "contains", "value": "其他" }
     },
     "image_size": {
       "type": "string",
@@ -35,7 +36,8 @@
       "description": "仅当尺寸选「自定义」时生效。",
       "minimum": 100,
       "maximum": 4000,
-      "default": 800
+      "default": 800,
+      "x-visible-when": { "field": "image_size", "op": "equals", "value": "自定义" }
     },
     "custom_height": {
       "type": "integer",
@@ -43,7 +45,8 @@
       "description": "仅当尺寸选「自定义」时生效。",
       "minimum": 100,
       "maximum": 4000,
-      "default": 800
+      "default": 800,
+      "x-visible-when": { "field": "image_size", "op": "equals", "value": "自定义" }
     },
     "headline": {
       "type": "string",
@@ -78,7 +81,8 @@
     "font_family_custom": {
       "type": "string",
       "title": "字体风格 · 自定义说明",
-      "description": "选了「其他」时填写具体字体名,例如「站酷高端黑」。"
+      "description": "选了「其他」时填写具体字体名,例如「站酷高端黑」。",
+      "x-visible-when": { "field": "font_family", "op": "equals", "value": "其他" }
     },
     "background": {
       "title": "背景风格",
@@ -147,12 +151,18 @@
       "description": "嵌套配置:是否加角标,以及角标文案与颜色。",
       "properties": {
         "enabled": { "type": "boolean", "title": "启用促销角标", "default": true },
-        "text": { "type": "string", "title": "角标文案", "default": "限时特惠" },
+        "text": {
+          "type": "string",
+          "title": "角标文案",
+          "default": "限时特惠",
+          "x-visible-when": { "field": "enabled", "op": "equals", "value": true }
+        },
         "color": {
           "type": "string",
           "title": "角标颜色",
           "pattern": "^#[0-9a-fA-F]{6}$",
-          "default": "#FF0000"
+          "default": "#FF0000",
+          "x-visible-when": { "field": "enabled", "op": "equals", "value": true }
         }
       }
     },

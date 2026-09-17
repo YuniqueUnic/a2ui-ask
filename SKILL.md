@@ -62,25 +62,54 @@ cargo, manual): see `install.md` in this repository.
 - **Speak the user's language.** Write every `title` and `description` in the
   language the user is chatting in, and say in the description what the answer
   changes downstream ("drives whether we need rate limiting").
-- **Always leave an escape hatch.** Your options and defaults are guesses. For
-  every select, append an `其他`/`other` option plus a sibling `<field>_custom`
-  text input ("选了「其他」?在这里说明") so the user can correct you instead of
-  being forced into a wrong choice.
+- **Always leave an escape hatch, and keep it out of the way.** Your options and
+  defaults are guesses, so every select gets an `其他`/`other` option plus a
+  sibling `<field>_custom` text input. Gate that input with `x-visible-when` so
+  it only shows up once the user actually picks the escape option — a
+  permanently visible empty box reads as a question they still owe you an answer
+  to:
+
+  ```json
+  "delivery_form": { "enum": ["单个 HTML 文件", "其他"], "default": "单个 HTML 文件" },
+  "delivery_form_custom": {
+    "type": "string",
+    "title": "交付形式 · 自定义说明",
+    "description": "选了「其他」时填写:你想要的交付形式。",
+    "x-visible-when": { "field": "delivery_form", "op": "equals", "value": "其他" }
+  }
+  ```
+
+  Use `"op": "contains"` when the controlling field is a multi-select (the
+  option list has to *contain* the escape value). The rule must name a sibling
+  of the same object: a typo is rejected when the form loads rather than hiding
+  the field forever. The controlling field's `default` must not be the escape
+  value, or the input would be visible from the start.
 
 ## Question type → schema cheat sheet
 
-| You need              | Schema shape                                                              | Renders as                |
-| --------------------- | ------------------------------------------------------------------------- | ------------------------- |
-| short text input      | `{"type": "string", "minLength": …, "pattern": …}`                        | inline text field         |
-| number                | `{"type": "integer", "minimum": …, "maximum": …}`                         | numeric field with guards |
-| yes/no                | `{"type": "boolean"}`                                                     | toggle                    |
-| single select         | `{"type": "string", "enum": [...]}`                                       | popup selector            |
-| multi select          | `{"type": "array", "items": {"enum": [...]}, "uniqueItems": true}`        | multi-select popup        |
-| select + escape hatch | `enum: [..., "其他"]` plus sibling `"<field>_custom": {"type": "string"}` | selector + text field     |
-| pick-one-with-config  | `{"oneOf": [{"title": "A", …}, {"title": "B", …}]}`                       | variant chooser + subform |
-| grouped fields        | `{"type": "object", "properties": {…}}`                                   | nested section            |
-| list of records       | `{"type": "array", "items": {"type": "object", "properties": {…}}}`       | list + per-entry overlay  |
-| free-form key/value   | `{"type": "object", "additionalProperties": {"type": "string"}}`          | key/value editor          |
+| You need              | Schema shape                                                              | Renders as                       |
+| --------------------- | ------------------------------------------------------------------------- | -------------------------------- |
+| short text input      | `{"type": "string", "minLength": …, "pattern": …}`                        | inline text field                |
+| long text input       | `{"type": "string", "x-multiline": true}`                                 | multi-line text area             |
+| number                | `{"type": "integer", "minimum": …, "maximum": …}`                         | numeric field with guards        |
+| yes/no                | `{"type": "boolean"}`                                                     | toggle                           |
+| single select         | `{"type": "string", "enum": [...]}`                                       | popup selector                   |
+| multi select          | `{"type": "array", "items": {"enum": [...]}, "uniqueItems": true}`        | checkbox list (one per option)   |
+| select + escape hatch | `enum: [..., "其他"]` plus a sibling `"<field>_custom"` carrying `x-visible-when` | selector, then a text field once 「其他」 is picked |
+| conditional field     | `"x-visible-when": {"field": <sibling>, "op": "equals"\|"contains", "value": …}` | hidden until the sibling matches |
+| pick-one-with-config  | `{"oneOf": [{"title": "A", …}, {"title": "B", …}]}`                       | variant chooser + subform        |
+| grouped fields        | `{"type": "object", "properties": {…}}`                                   | nested section                   |
+| list of records       | `{"type": "array", "items": {"type": "object", "properties": {…}}}`       | list + per-entry overlay         |
+| free-form key/value   | `{"type": "object", "additionalProperties": {"type": "string"}}`          | key/value editor                 |
+
+`x-visible-when` is not only for escape hatches: use it whenever a question only
+applies conditionally (`has_changes` → `change_notes`, `cache.enabled` →
+`cache.ttl_seconds`). `x-multiline` is for anything you would expect the user to
+write more than one line into — a goal, a description, a change log.
+
+Both hints need `schemaui-cli` ≥ 0.7.7 (`schemaui` ≥ 0.13.0). An older engine
+ignores unknown `x-` keywords, so the form still runs — it just shows every
+field and single-line inputs.
 
 Read `examples/feature-brief.schema.json` (English, every control type) and
 `examples/invoice-reimbursement.schema.json` (Chinese, escape hatches on every
@@ -90,7 +119,9 @@ select) before generating your own.
 
 1. Generate a draft-07 JSON Schema for the question (top-level `type: object`;
    per-field `title` / `description` / `default`; `enum`, `minimum` / `maximum`,
-   nested `properties` as needed — see the cheat sheet).
+   nested `properties` as needed — see the cheat sheet). A form with an `其他`
+   option and no `x-visible-when` on its companion field, or a paragraph-length
+   answer squeezed into a one-line input, is an unfinished form.
 
 2. Run the helper script from this skill's directory — it spawns the server,
    prints the URL, opens the user's browser, enforces the timeout, and writes
@@ -183,7 +214,7 @@ the recommended answers):
 | Example                             | Scenario                                                                             |
 | ----------------------------------- | ------------------------------------------------------------------------------------ |
 | `env-schema.json`                   | minimal 4-field deploy form — first smoke test                                       |
-| `feature-brief.schema.json`         | 11-question requirements brief, every control type (EN)                              |
+| `feature-brief.schema.json`         | 12-question requirements brief, every control type + both hints (EN)                 |
 | `invoice-reimbursement.schema.json` | office: invoice & expense reimbursement (中文, escape hatches)                       |
 | `ecommerce-main-image.schema.json`  | design: e-commerce hero image specs — sizes, fonts, colors, oneOf backgrounds (中文) |
 | `seo-diagnosis.schema.json`         | SEO triage: site, issues, keywords, competitors (中文)                               |
