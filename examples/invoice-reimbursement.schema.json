@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "发票报销处理",
-  "description": "办公场景示例:Agent 在帮你整理报销单之前需要确认的信息。每个选项都带推荐默认值;选项不符合实际情况时,选「其他」并在对应的自定义输入框里说明。",
+  "description": "办公场景示例:Agent 在帮你整理报销单之前需要确认的信息。每个选项都带推荐默认值;选项不符合实际情况时选「其他」,对应的自定义输入框才会出现。",
   "type": "object",
   "required": ["expense_type", "invoice_count", "total_amount", "invoice_title"],
   "properties": {
@@ -15,7 +15,8 @@
     "expense_type_custom": {
       "type": "string",
       "title": "报销类型 · 自定义说明",
-      "description": "上一题选了「其他」时必填:一句话说明这是什么费用。"
+      "description": "上一题选了「其他」时必填:一句话说明这是什么费用。",
+      "x-visible-when": { "field": "expense_type", "op": "equals", "value": "其他" }
     },
     "invoice_count": {
       "type": "integer",
@@ -42,7 +43,8 @@
     "currency_custom": {
       "type": "string",
       "title": "币种 · 自定义说明",
-      "description": "币种选了「其他」时填写,例如「港币 HKD」。"
+      "description": "币种选了「其他」时填写,例如「港币 HKD」。",
+      "x-visible-when": { "field": "currency", "op": "equals", "value": "其他" }
     },
     "invoice_date": {
       "type": "string",
@@ -63,6 +65,12 @@
       "description": "抬头开错会导致整张发票无法报销。",
       "enum": ["企业(含税号)", "个人", "其他"],
       "default": "企业(含税号)"
+    },
+    "invoice_title_custom": {
+      "type": "string",
+      "title": "抬头类型 · 自定义说明",
+      "description": "抬头选了「其他」时填写,例如「事业单位」。",
+      "x-visible-when": { "field": "invoice_title", "op": "equals", "value": "其他" }
     },
     "tax_number": {
       "type": "string",
@@ -98,7 +106,8 @@
           },
           "kind_custom": {
             "type": "string",
-            "title": "附件类型 · 自定义说明"
+            "title": "附件类型 · 自定义说明",
+            "x-visible-when": { "field": "kind", "op": "equals", "value": "其他" }
           },
           "filename": {
             "type": "string",

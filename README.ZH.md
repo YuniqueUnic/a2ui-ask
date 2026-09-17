@@ -108,7 +108,8 @@ Windows / PowerShell 7+:`pwsh scripts/ask.ps1 -Schema … -Title …`。没有 P
 - **好好提问** —— 先翻代码库再开口;一个决策簇一张表单;每个问题都带推 荐答案
   (写进 `default`);标题和描述用*你的*语言书写。
 - **处处留逃生口** —— 每个选择都带「其他」选项 + 自由文本补充字段，你不
-  会被迫塞进错误选项。
+  会被迫塞进错误选项;补充框只在你真的选了「其他」之后才出现，长段回答给
+  的是多行输入框而不是单行。
 - **全控件速查表** —— 文本、数值、布尔、单选/多选、oneOf 组合、嵌套对
   象、记录列表、键值映射。
 
@@ -120,7 +121,7 @@ Windows / PowerShell 7+:`pwsh scripts/ask.ps1 -Schema … -Title …`。没有 P
 | 示例                                                                                | 场景                                                |
 | ----------------------------------------------------------------------------------- | --------------------------------------------------- |
 | [`env-schema.json`](./examples/env-schema.json)                                     | 最小 4 字段部署表单 —— 首次冒烟测试                 |
-| [`feature-brief.schema.json`](./examples/feature-brief.schema.json)                 | 11 问需求简报，覆盖全部控件类型 (英文)              |
+| [`feature-brief.schema.json`](./examples/feature-brief.schema.json)                 | 12 问需求简报，覆盖全部控件类型 (英文)              |
 | [`invoice-reimbursement.schema.json`](./examples/invoice-reimbursement.schema.json) | 办公：发票报销处理 (中文，每个选择带「其他」逃生口) |
 | [`ecommerce-main-image.schema.json`](./examples/ecommerce-main-image.schema.json)   | 设计：电商主图 —— 尺寸、字号、颜色、渐变背景 (中文) |
 | [`seo-diagnosis.schema.json`](./examples/seo-diagnosis.schema.json)                 | SEO 排查：站点、问题、关键词、竞品 (中文)           |

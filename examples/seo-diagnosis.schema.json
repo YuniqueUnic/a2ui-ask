@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "网站 SEO 问题排查",
-  "description": "SEO 场景示例:Agent 在给出诊断方案前需要先摸清站点现状。问题描述越具体,诊断越准;选项覆盖不到的情况选「其他」并补充。",
+  "description": "SEO 场景示例:Agent 在给出诊断方案前需要先摸清站点现状。问题描述越具体,诊断越准;选项覆盖不到的情况选「其他」,对应的自定义输入框才会出现。",
   "type": "object",
   "required": ["site_url", "site_type", "main_issues", "search_engines"],
   "properties": {
@@ -22,7 +22,8 @@
     "site_type_custom": {
       "type": "string",
       "title": "站点类型 · 自定义说明",
-      "description": "选了「其他」时填写,例如「文档站」「导航站」。"
+      "description": "选了「其他」时填写,例如「文档站」「导航站」。",
+      "x-visible-when": { "field": "site_type", "op": "equals", "value": "其他" }
     },
     "main_issues": {
       "type": "array",
@@ -47,7 +48,9 @@
     "main_issues_custom": {
       "type": "string",
       "title": "问题 · 自定义说明",
-      "description": "问题列表里没有的,选「其他」后在这里详细描述现象和时间点。"
+      "description": "问题列表里没有的,选「其他」后在这里详细描述现象和时间点。",
+      "x-visible-when": { "field": "main_issues", "op": "contains", "value": "其他" },
+      "x-multiline": true
     },
     "target_keywords": {
       "type": "array",
@@ -76,7 +79,8 @@
     "target_market_custom": {
       "type": "string",
       "title": "目标市场 · 自定义说明",
-      "description": "选了「其他」时填写,例如「日语市场」。"
+      "description": "选了「其他」时填写,例如「日语市场」。",
+      "x-visible-when": { "field": "target_market", "op": "equals", "value": "其他" }
     },
     "recent_changes": {
       "type": "object",
@@ -91,7 +95,9 @@
         "change_notes": {
           "type": "string",
           "title": "改动说明",
-          "description": "有改动时填写:什么时候改了什么,例如「8 月全站启用了 HTTPS」。"
+          "description": "有改动时填写:什么时候改了什么,例如「8 月全站启用了 HTTPS」。",
+          "x-visible-when": { "field": "has_changes", "op": "equals", "value": true },
+          "x-multiline": true
         }
       }
     },
@@ -126,13 +132,15 @@
     "tech_stack_custom": {
       "type": "string",
       "title": "技术栈 · 自定义说明",
-      "description": "选了「其他」时填写,例如「Next.js + Headless CMS」。"
+      "description": "选了「其他」时填写,例如「Next.js + Headless CMS」。",
+      "x-visible-when": { "field": "tech_stack", "op": "equals", "value": "其他" }
     },
     "goal": {
       "type": "string",
       "title": "期望目标",
       "description": "一句话说清三个月后想看到什么,例如「核心词进前 20,收录恢复到 5000」。",
-      "default": "核心关键词进入百度前 20,新页面一周内收录"
+      "default": "核心关键词进入百度前 20,新页面一周内收录",
+      "x-multiline": true
     }
   }
 }

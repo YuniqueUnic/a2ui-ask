@@ -25,8 +25,12 @@ NOT ask in plain text. Spawn a schemaui Web form and write the result to a file.
   and never interrogate serially in chat.
 - Put your recommended answer in each field's `default` so the user confirms
   with one click; say what you recommended and why in chat.
+- Leave an escape hatch on every select: an `其他`/`other` option plus a sibling
+  `<field>_custom` input gated by `x-visible-when`, so it appears only once the
+  user picks it (`"op": "contains"` for a multi-select). Mark long-form answers
+  `x-multiline` so they get a text area instead of a one-line input.
 - Question-type cheat sheet (single/multi select, oneOf composition, key/value
-  maps, …): see `SKILL.md` and the 11-question showcase
+  maps, …): see `SKILL.md` and the 12-question showcase
   `examples/feature-brief.schema.json`.
 
 ## Preferred path: the helper script
