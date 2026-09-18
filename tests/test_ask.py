@@ -10,11 +10,13 @@ Set SCHEMAUI_BIN to test a specific binary; otherwise the tests use whatever
 
 from __future__ import annotations
 
+import argparse
 import json
 import os
 import shutil
 import subprocess
 import sys
+import threading
 import time
 import urllib.request
 from datetime import datetime
@@ -51,6 +53,23 @@ FEATURE_BRIEF_ANSWER = {
     "endpoints": [{"method": "POST", "path": "/api/invites", "auth_required": True}],
     "labels": {"team": "growth"},
 }
+
+# The launcher matrix every e2e test runs against. Both twins must keep the same
+# contract, so each behavioural test is exercised through both rather than
+# trusting the "same flags, same stdout contract" claim.
+LAUNCHERS = [
+    pytest.param([sys.executable, str(PY_SCRIPT)], id="python"),
+    pytest.param(
+        ["bash", str(SH_SCRIPT)],
+        # ask.sh targets macOS/Linux; on Windows the supported twin is ask.ps1
+        # (covered by test_e2e_powershell_commit), so the Git-Bash path is
+        # intentionally out of the matrix.
+        marks=pytest.mark.skipif(
+            sys.platform == "win32", reason="ask.sh targets macOS/Linux; Windows uses ask.ps1"
+        ),
+        id="shell",
+    ),
+]
 
 
 # ---------------------------------------------------------------- unit tests
@@ -98,6 +117,90 @@ def test_build_paths_layout():
     assert answer == Path(".schemaui/answers/deploy-config-20260916-101500.json")
 
 
+def _namespace(**overrides) -> argparse.Namespace:
+    """A Namespace with the defaults `build_command` cares about."""
+    base = {
+        "host": "0.0.0.0",
+        "config": None,
+        "title": "T",
+        "description": None,
+        "timeout": 300,
+        "force": False,
+        "stdout_echo": False,
+    }
+    base.update(overrides)
+    return argparse.Namespace(**base)
+
+
+def _build(**overrides) -> list[str]:
+    return ask.build_command(
+        "schemaui",
+        _namespace(**overrides),
+        Path("s.json"),
+        Path("a.json"),
+        8787,
+        native_timeout=True,
+    )
+
+
+def test_build_command_passes_the_deadline_to_a_capable_engine():
+    cmd = _build(timeout=90)
+    assert cmd[cmd.index("--timeout") + 1] == "90"
+
+
+def test_build_command_omits_the_deadline_for_an_older_engine():
+    # A build without `--timeout` would abort on an unknown flag, so the flag
+    # must be dropped entirely and the wrapper's own timer used instead.
+    cmd = ask.build_command(
+        "schemaui",
+        _namespace(timeout=90),
+        Path("s.json"),
+        Path("a.json"),
+        8787,
+        native_timeout=False,
+    )
+    assert "--timeout" not in cmd
+
+
+def test_build_command_never_asks_for_an_instant_deadline():
+    # `--timeout 0` means "no deadline" on both sides; forwarding it would ask
+    # the engine to expire the session the moment it opened.
+    assert "--timeout" not in _build(timeout=0)
+
+
+def test_build_command_keeps_the_deadline_before_the_greedy_output_flag():
+    # `-o` swallows every following token, so a `--timeout` placed after it
+    # would be read as a second output path instead of a flag.
+    cmd = _build(timeout=90)
+    assert cmd.index("--timeout") < cmd.index("-o")
+
+
+def test_supports_native_timeout_reads_the_help_output(tmp_path: Path):
+    fake = tmp_path / "schemaui"
+    fake.write_text(
+        "#!/bin/sh\n"
+        'echo "Usage: schemaui web [OPTIONS]"\n'
+        'echo "      --timeout <SECONDS>  abort the session after this long"\n'
+    )
+    fake.chmod(0o755)
+    assert ask.supports_native_timeout(str(fake)) is True
+
+    old = tmp_path / "old-schemaui"
+    old.write_text("#!/bin/sh\necho 'Usage: schemaui web [OPTIONS]'\necho '  -o, --output'\n")
+    old.chmod(0o755)
+    assert ask.supports_native_timeout(str(old)) is False
+
+
+def test_supports_native_timeout_survives_a_broken_binary(tmp_path: Path):
+    # The probe must not turn an unhelpful binary into a crash; falling back to
+    # the wrapper's own timer is always safe.
+    broken = tmp_path / "broken"
+    broken.write_text("#!/bin/sh\nexit 127\n")
+    broken.chmod(0o755)
+    assert ask.supports_native_timeout(str(broken)) is False
+    assert ask.supports_native_timeout(str(tmp_path / "does-not-exist")) is False
+
+
 # ----------------------------------------------------------------- e2e tests
 
 
@@ -130,23 +233,7 @@ def drive_session(url: str, payload: dict) -> None:
 
 
 @needs_binary
-@pytest.mark.parametrize(
-    "launcher",
-    [
-        [sys.executable, str(PY_SCRIPT)],
-        pytest.param(
-            ["bash", str(SH_SCRIPT)],
-            # ask.sh targets macOS/Linux; on Windows the supported twin is
-            # ask.ps1 (covered by test_e2e_powershell_commit), so the Git-Bash
-            # path is intentionally out of the matrix.
-            marks=pytest.mark.skipif(
-                sys.platform == "win32", reason="ask.sh targets macOS/Linux; Windows uses ask.ps1"
-            ),
-            id="shell",
-        ),
-    ],
-    ids=["python", "shell"],
-)
+@pytest.mark.parametrize("launcher", LAUNCHERS)
 def test_e2e_commit_writes_answer(tmp_path: Path, launcher: list[str]):
     proc = subprocess.Popen(
         [
@@ -279,11 +366,11 @@ def test_e2e_feature_brief_full_control_showcase(tmp_path: Path):
 
 
 @needs_binary
-def test_e2e_timeout_kills_session(tmp_path: Path):
+@pytest.mark.parametrize("launcher", LAUNCHERS)
+def test_e2e_timeout_kills_session(tmp_path: Path, launcher: list[str]):
     proc = subprocess.Popen(
         [
-            sys.executable,
-            str(PY_SCRIPT),
+            *launcher,
             "--schema",
             str(EXAMPLE_SCHEMA),
             "--port",
@@ -294,12 +381,63 @@ def test_e2e_timeout_kills_session(tmp_path: Path):
         ],
         cwd=tmp_path,
         stdout=subprocess.PIPE,
-        stderr=subprocess.DEVNULL,
+        stderr=subprocess.PIPE,
         text=True,
     )
     read_until(proc, "SCHEMAUI_URL=")
     assert proc.wait(timeout=15) == ask.EXIT_TIMEOUT
+    stderr = proc.stderr.read() if proc.stderr else ""
     assert not list(tmp_path.glob(".schemaui/answers/*.json"))
+    # The engine should have ended the session at its own deadline. If the
+    # wrapper's backstop had to kill it instead, the user never saw a countdown
+    # and the two messages differ -- so assert on which one was printed.
+    assert "no answer was committed" in stderr, stderr
+    assert "session killed" not in stderr, stderr
+
+
+@needs_binary
+@pytest.mark.parametrize("launcher", LAUNCHERS)
+def test_e2e_timeout_is_announced_on_stderr(tmp_path: Path, launcher: list[str]):
+    """The deadline must be visible to whoever reads the process, not just the browser."""
+    proc = subprocess.Popen(
+        [
+            *launcher,
+            "--schema",
+            str(EXAMPLE_SCHEMA),
+            "--port",
+            "0",
+            "--no-open",
+            "--timeout",
+            "120",
+        ],
+        cwd=tmp_path,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+    )
+    try:
+        read_until(proc, "SCHEMAUI_URL=")
+        # The engine announces the budget right after the URL. A wrapper that
+        # killed the process locally would never produce this line, so its
+        # presence is also the proof that the flag was actually forwarded.
+        #
+        # Drained on a thread rather than with readline(): a blocking read on a
+        # quiet pipe would never return, so the deadline below could not fire.
+        assert proc.stderr is not None
+        seen: list[str] = []
+        pump = threading.Thread(target=lambda: seen.extend(proc.stderr), daemon=True)
+        pump.start()
+
+        deadline = time.monotonic() + 10
+        while time.monotonic() < deadline:
+            if any("closes automatically in" in line for line in seen):
+                break
+            time.sleep(0.05)
+
+        text = "".join(seen)
+        assert "closes automatically in 2m" in text, text
+    finally:
+        proc.kill() if proc.poll() is None else None
 
 
 @needs_binary

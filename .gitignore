@@ -18,3 +18,4 @@ docs/launch-posts.md
 
 # agent workspace state (session memory, local to this checkout)
 .workbuddy-ai/
+.tmp/

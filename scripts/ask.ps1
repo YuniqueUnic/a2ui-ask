@@ -17,6 +17,11 @@
 
   Exit codes: 0 ok | 3 schemaui missing | 4 timeout | 5 session failed | 6 bad input
 
+  -Timeout is handed to schemaui itself when the installed build supports it, so
+  the engine can show the user a countdown and refuse to write a half-filled
+  answer. Without that flag this script can only kill the process, which ends the
+  session just as abruptly but with no warning on screen.
+
 .EXAMPLE
   pwsh ask.ps1 -Schema ./question.json -Title "Deployment Config"
 
@@ -52,6 +57,12 @@ $EXIT_NO_BINARY = 3
 $EXIT_TIMEOUT = 4
 $EXIT_SESSION_FAILED = 5
 $EXIT_BAD_INPUT = 6
+
+# How long schemaui is allowed to overrun its own deadline before this script
+# gives up on it. Generous on purpose: a normal timeout must never be mistaken
+# for a hang.
+$TIMEOUT_GRACE = 30
+$ENGINE_EXIT_TIMEOUT = 4
 
 function ConvertTo-Slug([string]$Text) {
   $slug = ($Text.ToLower() -replace "[^a-z0-9]+", "-").Trim("-")
@@ -111,6 +122,20 @@ if (-not $binary) {
   exit $EXIT_NO_BINARY
 }
 
+# Whether this build understands `--timeout`. Probed once, from the help text,
+# because passing an unknown flag to clap is a hard error -- guessing wrong would
+# turn every run into a failure.
+$nativeTimeout = $false
+if ($Timeout -gt 0) {
+  # Help goes to stdout; stderr is discarded so a chatty binary cannot turn the
+  # probe itself into an error record.
+  $help = (& $binary web --help 2>$null | Out-String)
+  $nativeTimeout = $help -match "--timeout"
+  if (-not $nativeTimeout) {
+    [Console]::Error.WriteLine("Note: this schemaui build has no --timeout, so the ${Timeout}s deadline is enforced by killing the session instead.")
+  }
+}
+
 if ($Schema -eq "-") {
   $payload = [Console]::In.ReadToEnd()
   try { $null = $payload | ConvertFrom-Json } catch {
@@ -153,6 +178,9 @@ function Invoke-SchemauiSession([int]$BindPort) {
   if ($Config) { $argList += @("--config", $Config) }
   if ($Title) { $argList += @("--title", $Title) }
   if ($Description) { $argList += @("--description", $Description) }
+  # Let the engine own the deadline when it can: it is the only side that can
+  # show the user a countdown, and it refuses to write a half-filled answer.
+  if ($Timeout -gt 0 -and $nativeTimeout) { $argList += @("--timeout", "$Timeout") }
   if ($Force) { $argList += "--force" }
   $argList += @("-o", $Output)
   if ($StdoutEcho) { $argList += "-" }
@@ -200,19 +228,34 @@ function Invoke-SchemauiSession([int]$BindPort) {
 
   $exited = $true
   if ($Timeout -gt 0) {
-    $exited = $proc.WaitForExit($Timeout * 1000)
+    # With engine-side support this only waits out a build that never returns,
+    # so it allows the deadline plus a grace period rather than racing the engine
+    # to it.
+    $budget = $Timeout
+    if ($nativeTimeout) { $budget += $TIMEOUT_GRACE }
+    $exited = $proc.WaitForExit($budget * 1000)
   } else {
     $proc.WaitForExit()
   }
   if (-not $exited) {
     $proc.Kill()
     Remove-Item $errFile -ErrorAction SilentlyContinue
-    [Console]::Error.WriteLine("Timed out after ${Timeout}s waiting for the user; session killed. Fall back to plain-text questions.")
+    if ($nativeTimeout) {
+      [Console]::Error.WriteLine("schemaui did not exit within ${TIMEOUT_GRACE}s of its ${Timeout}s deadline; killed. Fall back to plain-text questions.")
+    } else {
+      [Console]::Error.WriteLine("Timed out after ${Timeout}s waiting for the user; session killed. Fall back to plain-text questions.")
+    }
     return @{ Code = $EXIT_TIMEOUT; Announced = $true }
   }
 
   Get-Content $errFile -ErrorAction SilentlyContinue | ForEach-Object { [Console]::Error.WriteLine($_) }
   Remove-Item $errFile -ErrorAction SilentlyContinue
+  # 4 is the engine's own "deadline passed" code, and it means no output was
+  # written -- the same outcome this script reports as 4.
+  if ($nativeTimeout -and $proc.ExitCode -eq $ENGINE_EXIT_TIMEOUT) {
+    [Console]::Error.WriteLine("Timed out after ${Timeout}s waiting for the user; no answer was committed. Fall back to plain-text questions.")
+    return @{ Code = $EXIT_TIMEOUT; Announced = $true }
+  }
   if ($proc.ExitCode -ne 0) {
     [Console]::Error.WriteLine("schemaui exited with code $($proc.ExitCode); no answer was committed. Fall back to plain-text questions.")
     return @{ Code = $EXIT_SESSION_FAILED; Announced = $true }

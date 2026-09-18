@@ -13,6 +13,11 @@
 #   SCHEMAUI_RESULT=<answer path>                (final line on success)
 #
 # Exit codes: 0 ok | 2 usage | 3 schemaui missing | 4 timeout | 5 session failed | 6 bad input
+#
+# `--timeout` is handed to schemaui itself when the installed build supports it,
+# so the engine can show the user a countdown and refuse to write a half-filled
+# answer. Without that flag this script can only kill the process, which ends the
+# session just as abruptly but with no warning on screen.
 set -euo pipefail
 
 HOST=0.0.0.0
@@ -28,6 +33,11 @@ DESCRIPTION=""
 TOPIC=""
 OUTPUT=""
 
+# How long the engine is allowed to overrun its own deadline before this script
+# gives up on it. Generous on purpose: a normal timeout must never be mistaken
+# for a hang.
+TIMEOUT_GRACE=30
+
 usage() {
   cat <<'EOF'
 Usage: ask.sh --schema PATH [options]
@@ -40,7 +50,8 @@ Usage: ask.sh --schema PATH [options]
   --output PATH       answer file (default: .schemaui/answers/<topic>-<ts>.json)
   --host IP           bind address (default: 0.0.0.0)
   --port N            bind port, 0 = random (default: 8787; retried as 0 if busy)
-  --timeout N         seconds to wait, 0 = forever (default: 300)
+  --timeout N         seconds to wait, 0 = forever (default: 300). Handed to
+                      schemaui when it supports it, so the form shows a countdown
   --no-open           do not open a browser (remote/headless runs)
   --stdout-echo       also pass '-o -' so schemaui echoes the result JSON
   --force             overwrite an existing answer file
@@ -80,6 +91,16 @@ command -v "$BINARY" >/dev/null 2>&1 || {
   echo "schemaui binary not found (set SCHEMAUI_BIN or install schemaui-cli). Fall back to plain-text questions." >&2
   exit 3
 }
+
+# Whether this build understands `--timeout`. Probed once, from the help text,
+# because passing an unknown flag to clap is a hard error -- guessing wrong would
+# turn every run into a failure.
+NATIVE_TIMEOUT=0
+if [ "$TIMEOUT" -gt 0 ] && "$BINARY" web --help 2>&1 | grep -q -- '--timeout'; then
+  NATIVE_TIMEOUT=1
+elif [ "$TIMEOUT" -gt 0 ]; then
+  echo "Note: this schemaui build has no --timeout, so the ${TIMEOUT}s deadline is enforced by killing the session instead." >&2
+fi
 
 slugify() {
   echo "$1" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9]+/-/g; s/^-+|-+$//g'
@@ -132,14 +153,21 @@ run_session() {
   [ -n "$CONFIG" ] && set -- "$@" --config "$CONFIG"
   [ -n "$TITLE" ] && set -- "$@" --title "$TITLE"
   [ -n "$DESCRIPTION" ] && set -- "$@" --description "$DESCRIPTION"
+  # Let the engine own the deadline when it can: it is the only side that can
+  # show the user a countdown, and it refuses to write a half-filled answer.
+  [ "$TIMEOUT" -gt 0 ] && [ "$NATIVE_TIMEOUT" -eq 1 ] && set -- "$@" --timeout "$TIMEOUT"
   [ "$FORCE" -eq 1 ] && set -- "$@" --force
   set -- "$@" -o "$OUTPUT"
   [ "$STDOUT_ECHO" -eq 1 ] && set -- "$@" -
 
+  # stderr goes through `tee`: the log file is what this script greps for the
+  # URL, and the copy on fd 2 is what makes the engine's announcements visible
+  # *while* the user is filling the form -- the deadline is useless if the
+  # operator only learns it after the session has already ended.
   if [ "$STDOUT_ECHO" -eq 1 ]; then
-    "$@" 2>"$err_log" &
+    "$@" 2> >(tee "$err_log" >&2) &
   else
-    "$@" >/dev/null 2>"$err_log" &
+    "$@" >/dev/null 2> >(tee "$err_log" >&2) &
   fi
   child=$!
 
@@ -154,7 +182,6 @@ run_session() {
 
   if [ -z "$url" ]; then
     wait "$child" 2>/dev/null || true
-    cat "$err_log" >&2
     rm -f "$err_log"
     return 7
   fi
@@ -170,7 +197,12 @@ run_session() {
   if [ "$TIMEOUT" -gt 0 ]; then
     fired="$(mktemp -t a2ui-ask-timeout.XXXXXX)"
     rm -f "$fired"
-    ( sleep "$TIMEOUT"; kill -TERM "$child" 2>/dev/null && touch "$fired" ) &
+    # With engine-side support this is only a backstop for a build that never
+    # returns, so it waits out the deadline plus a grace period rather than
+    # racing the engine to it.
+    local grace=0
+    [ "$NATIVE_TIMEOUT" -eq 1 ] && grace=$TIMEOUT_GRACE
+    ( sleep $((TIMEOUT + grace)); kill -TERM "$child" 2>/dev/null && touch "$fired" ) &
     watchdog=$!
   fi
 
@@ -180,17 +212,26 @@ run_session() {
     kill "$watchdog" 2>/dev/null || true
     wait "$watchdog" 2>/dev/null || true
   fi
-  cat "$err_log" >&2
   rm -f "$err_log"
 
   if [ -n "$fired" ] && [ -f "$fired" ]; then
     rm -f "$fired"
-    echo "Timed out after ${TIMEOUT}s waiting for the user; session killed. Fall back to plain-text questions." >&2
+    if [ "$NATIVE_TIMEOUT" -eq 1 ]; then
+      echo "schemaui did not exit within ${TIMEOUT_GRACE}s of its ${TIMEOUT}s deadline; killed. Fall back to plain-text questions." >&2
+    else
+      echo "Timed out after ${TIMEOUT}s waiting for the user; session killed. Fall back to plain-text questions." >&2
+    fi
     return 4
   fi
   [ -n "$fired" ] && rm -f "$fired"
   if [ "$code" -eq 0 ]; then
     return 0
+  fi
+  # 4 is the engine's own "deadline passed" code, and it means no output was
+  # written -- the same outcome this script reports as 4.
+  if [ "$NATIVE_TIMEOUT" -eq 1 ] && [ "$code" -eq 4 ]; then
+    echo "Timed out after ${TIMEOUT}s waiting for the user; no answer was committed. Fall back to plain-text questions." >&2
+    return 4
   fi
   echo "schemaui exited with code $code; no answer was committed. Fall back to plain-text questions." >&2
   return 5

@@ -19,9 +19,13 @@ Exit codes:
   0  success, answer file written
   2  usage error (argparse)
   3  schemaui binary not found
-  4  timed out waiting for the user (process killed)
+  4  timed out waiting for the user (no answer committed)
   5  schemaui exited non-zero (bind failure, Ctrl+C abort, ...)
   6  schema/config input problem
+
+`--timeout` is enforced by schemaui itself when the installed build supports it,
+so the user sees a live countdown in the form instead of the form going dead
+under them. The wrapper keeps only a backstop for an engine that never returns.
 """
 
 from __future__ import annotations
@@ -48,9 +52,18 @@ EXIT_TIMEOUT = 4
 EXIT_SESSION_FAILED = 5
 EXIT_BAD_INPUT = 6
 
+# Exit code schemaui uses when a session's own deadline fires. Deliberately
+# distinct from 1 so "nobody answered" is not confused with "the run failed".
+ENGINE_EXIT_TIMEOUT = 4
+
 DEFAULT_HOST = "0.0.0.0"
 DEFAULT_PORT = 8787
 DEFAULT_TIMEOUT = 300
+# Extra wall-clock time allowed after schemaui's own deadline before the wrapper
+# kills it. The engine is expected to exit on its own; this only catches an
+# engine that wedges, and it must be comfortably longer than the deadline so a
+# normal timeout is never mistaken for a hang.
+TIMEOUT_GRACE = 30.0
 WILDCARD_HOSTS = {"0.0.0.0", "::"}
 URL_PARTS = re.compile(r"^(https?://)(\[[0-9a-fA-F:]+\]|[^:/]+)(:\d+)?(/.*)?$")
 URL_IN_TEXT = re.compile(r"https?://[^\s\"'<>]+")
@@ -167,7 +180,8 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
         "--timeout",
         type=int,
         default=DEFAULT_TIMEOUT,
-        help=f"seconds to wait for the user, 0 = forever (default: {DEFAULT_TIMEOUT})",
+        help=f"seconds to wait for the user, 0 = forever (default: {DEFAULT_TIMEOUT}); "
+        "the form counts the remaining time down when schemaui supports it",
     )
     parser.add_argument(
         "--open",
@@ -207,8 +221,32 @@ def resolve_schema(spec: str, schema_path: Path) -> Path:
     return schema_path
 
 
+def supports_native_timeout(binary: str) -> bool:
+    """Whether this schemaui build understands `--timeout`.
+
+    Probed rather than assumed: a2ui-ask runs against whatever schemaui happens
+    to be on PATH, and passing a flag an older build does not have would turn a
+    working setup into a hard failure. The cost is one `--help` per run.
+    """
+    try:
+        proc = subprocess.run(
+            [binary, "--help"],
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return False
+    return "--timeout" in (proc.stdout + proc.stderr)
+
+
 def build_command(
-    binary: str, args: argparse.Namespace, schema: Path, answer: Path, port: int
+    binary: str,
+    args: argparse.Namespace,
+    schema: Path,
+    answer: Path,
+    port: int,
+    native_timeout: bool,
 ) -> list[str]:
     # NOTE: `-o` is greedy (clap `num_args = 1..` + hyphen values): it swallows
     # every following token, including later flags. Every other flag must come
@@ -230,6 +268,10 @@ def build_command(
         cmd += ["--title", args.title]
     if args.description:
         cmd += ["--description", args.description]
+    # Let the engine own the deadline when it can: it is the only side that can
+    # show the user a countdown, and it refuses to write a half-filled answer.
+    if args.timeout > 0 and native_timeout:
+        cmd += ["--timeout", str(args.timeout)]
     if args.force:
         cmd += ["--force"]
     cmd += ["-o", str(answer)]
@@ -254,7 +296,7 @@ def announce(url: str, answer: Path, open_browser: bool) -> None:
 
 
 def run_session(
-    cmd: list[str], args: argparse.Namespace, answer: Path
+    cmd: list[str], args: argparse.Namespace, answer: Path, native_timeout: bool
 ) -> tuple[int, bool]:
     """Spawn schemaui, relay stderr, announce the URL, block until done.
 
@@ -268,7 +310,16 @@ def run_session(
         text=True,
     )
     announced = False
-    deadline = None if args.timeout <= 0 else time.monotonic() + args.timeout
+    if args.timeout <= 0:
+        deadline = None
+    elif native_timeout:
+        # The engine ends the session at args.timeout on its own; this is only
+        # a backstop for an engine that never returns.
+        deadline = time.monotonic() + args.timeout + TIMEOUT_GRACE
+    else:
+        # No engine-side deadline, so the wrapper is the only thing enforcing
+        # one.
+        deadline = time.monotonic() + args.timeout
     assert proc.stderr is not None
 
     # Pump stderr on a thread: a blocking readline() would otherwise prevent
@@ -286,11 +337,19 @@ def run_session(
         while True:
             if deadline is not None and time.monotonic() > deadline:
                 proc.kill()
-                print(
-                    f"Timed out after {args.timeout}s waiting for the user; "
-                    "session killed. Fall back to plain-text questions.",
-                    file=sys.stderr,
-                )
+                if native_timeout:
+                    print(
+                        f"schemaui did not exit within {TIMEOUT_GRACE:.0f}s of "
+                        f"its {args.timeout}s deadline; killed. "
+                        "Fall back to plain-text questions.",
+                        file=sys.stderr,
+                    )
+                else:
+                    print(
+                        f"Timed out after {args.timeout}s waiting for the user; "
+                        "session killed. Fall back to plain-text questions.",
+                        file=sys.stderr,
+                    )
                 return EXIT_TIMEOUT, announced
             try:
                 line = lines.get(timeout=0.1)
@@ -314,6 +373,13 @@ def run_session(
         return EXIT_SESSION_FAILED, announced
     if not announced:
         return EXIT_SESSION_FAILED, False
+    if code == ENGINE_EXIT_TIMEOUT:
+        print(
+            f"Timed out after {args.timeout}s waiting for the user; "
+            "no answer was committed. Fall back to plain-text questions.",
+            file=sys.stderr,
+        )
+        return EXIT_TIMEOUT, True
     if code != 0:
         print(
             f"schemaui exited with code {code}; no answer was committed. "
@@ -357,15 +423,32 @@ def main(argv: list[str] | None = None) -> int:
 
     answer.parent.mkdir(parents=True, exist_ok=True)
 
+    native_timeout = supports_native_timeout(binary)
+    if args.timeout > 0 and not native_timeout:
+        print(
+            f"Note: this schemaui build has no --timeout, so the {args.timeout}s "
+            "deadline is enforced by the wrapper and the form shows no countdown. "
+            "Upgrade schemaui-cli to 0.13.1+ to see the remaining time.",
+            file=sys.stderr,
+        )
+
     code, announced = run_session(
-        build_command(binary, args, schema, answer, args.port), args, answer
+        build_command(binary, args, schema, answer, args.port, native_timeout),
+        args,
+        answer,
+        native_timeout,
     )
     if code == EXIT_SESSION_FAILED and not announced and args.port != 0:
         print(
             f"Port {args.port} unavailable; retrying with a random free port.",
             file=sys.stderr,
         )
-        code, _ = run_session(build_command(binary, args, schema, answer, 0), args, answer)
+        code, _ = run_session(
+            build_command(binary, args, schema, answer, 0, native_timeout),
+            args,
+            answer,
+            native_timeout,
+        )
 
     if code == EXIT_OK:
         try:
