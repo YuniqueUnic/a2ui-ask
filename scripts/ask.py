@@ -35,6 +35,7 @@ import json
 import os
 import queue
 import re
+import shlex
 import shutil
 import signal
 import socket
@@ -134,6 +135,12 @@ def build_paths(topic: str, now: datetime | None = None) -> tuple[Path, Path]:
 def find_binary() -> str | None:
     override = os.environ.get("SCHEMAUI_BIN")
     if override:
+        # A whole command, not just a path: "python3 wrapper.py" is the only
+        # way to point at a non-executable script, and it must survive
+        # supports_native_timeout, which runs `[binary, "--help"]` against the
+        # string verbatim. A bare name still resolves through PATH.
+        if shutil.which(override.split()[0]):
+            return override
         if Path(override).is_file():
             return override
         return shutil.which(override)  # allow a bare command name
@@ -227,10 +234,21 @@ def supports_native_timeout(binary: str) -> bool:
     Probed rather than assumed: a2ui-ask runs against whatever schemaui happens
     to be on PATH, and passing a flag an older build does not have would turn a
     working setup into a hard failure. The cost is one `--help` per run.
+
+    `binary` may be a whole command ("python3 wrapper.py" — the only way to
+    reach a script through a non-executable filesystem), so it is split the
+    same way the spawn will do it. On Windows the script path stays one token
+    (`posix=False` keeps backslash paths intact) and the shell-less spawn then
+    fails with OSError for a #!/bin/sh file, which lands on the False return —
+    the same answer a genuinely unhelpful binary gets.
     """
     try:
+        argv = shlex.split(binary, posix=(os.name != "nt"))
+    except ValueError:
+        return False
+    try:
         proc = subprocess.run(
-            [binary, "--help"],
+            [*argv, "--help"],
             capture_output=True,
             text=True,
             timeout=10,

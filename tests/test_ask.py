@@ -176,15 +176,21 @@ def test_build_command_keeps_the_deadline_before_the_greedy_output_flag():
     assert cmd.index("--timeout") < cmd.index("-o")
 
 
-def test_supports_native_timeout_reads_the_help_output(tmp_path: Path):
-    fake = tmp_path / "schemaui"
+def test_supports_native_timeout_reads_the_help_output(tmp_path, monkeypatch):
+    # The positive fake is *this interpreter* running a tiny script, not a
+    # #!/bin/sh file: a shebang means nothing on Windows, where only PE
+    # executables can be spawned, and the probe would (correctly) report False
+    # for a file it cannot run at all. SCHEMAUI_BIN is the supported injection
+    # point, and "python script" passes through find_binary verbatim — that is
+    # the contract the probe has to honour.
+    fake = tmp_path / "fake_schemaui.py"
     fake.write_text(
-        "#!/bin/sh\n"
-        'echo "Usage: schemaui web [OPTIONS]"\n'
-        'echo "      --timeout <SECONDS>  abort the session after this long"\n'
+        "import sys\n"
+        "print('Usage: schemaui web [OPTIONS]')\n"
+        "print('      --timeout <SECONDS>  abort the session after this long')\n"
     )
-    fake.chmod(0o755)
-    assert ask.supports_native_timeout(str(fake)) is True
+    monkeypatch.setenv("SCHEMAUI_BIN", f"{sys.executable} {fake}")
+    assert ask.supports_native_timeout(ask.find_binary()) is True
 
     old = tmp_path / "old-schemaui"
     old.write_text("#!/bin/sh\necho 'Usage: schemaui web [OPTIONS]'\necho '  -o, --output'\n")
