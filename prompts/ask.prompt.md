@@ -87,7 +87,9 @@ cat schema.json | python3 scripts/ask.py \
 4. Tell the user in your response text: "I've prepared a form at
    http://\<host\>:8787 — please open it in your browser. I'll wait. Your
    answers will be saved to `.schemaui/answers/<file>.json`." Use `localhost`
-   when you run on the user's machine, otherwise your LAN IP or hostname.
+   when you run on the user's machine, otherwise your LAN IP or hostname. Name
+   the deadline too — the form shows a live countdown, but the user has not
+   opened it yet when they read your message.
 
 5. Run the blocking command (all flags before `-o`):
 
@@ -98,6 +100,7 @@ cat schema.json | python3 scripts/ask.py \
      --config .schemaui/schemas/<topic>-defaults.json \
      --title "<short question summary>" \
      --description "<one-line context>" \
+     --timeout 300 \
      --force \
      -o .schemaui/answers/<topic>-<timestamp>.json
    ```
@@ -106,7 +109,9 @@ cat schema.json | python3 scripts/ask.py \
    (`-o .schemaui/answers/<file>.json -`).
 
    The server announces `<title> schemaui UI available at http://<addr>/` on
-   stderr. If port 8787 is busy the command fails fast; retry once with
+   stderr, followed by `Session closes automatically in <budget>` whenever
+   `--timeout` was given — that line is how you learn the deadline without
+   parsing the UI. If port 8787 is busy the command fails fast; retry once with
    `--port 0`, parse the `http://…` line from stderr, and relay that URL.
 
 6. On exit 0, read the answer file and continue the original task, citing field
@@ -119,8 +124,18 @@ cat schema.json | python3 scripts/ask.py \
 
 ## Timeout
 
-Cap the wait at 5 minutes when your runtime allows it. On timeout: kill the
-process, fall back to text questions, tell the user.
+Pass `--timeout SECONDS` and let the engine own the deadline: it renders a live
+countdown in the form and closes the session itself, so the user is never
+surprised. `0` means no deadline.
+
+The script hands `--timeout` straight through when the installed engine
+understands it (it probes `--help` once), and otherwise falls back to killing the
+process after the same interval — so the flag behaves the same either way, but
+only a capable engine can warn the user first.
+
+On timeout: exit code is `4`, nothing was written, fall back to text questions,
+and tell the user the form closed itself. Only kill the process yourself if the
+engine fails to exit — the script already allows a 30s grace for that.
 
 ## Fallback (never hard-fail)
 

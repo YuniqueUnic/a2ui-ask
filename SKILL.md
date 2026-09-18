@@ -59,6 +59,12 @@ cargo, manual): see `install.md` in this repository.
 - **Every question ships a recommended answer.** Put your recommendation in the
   field's `default` so the user can confirm with one click instead of typing.
   Say in chat what you recommended and why.
+- **Keep the recommendation out of the option label.** `default` is the one place
+  the recommendation lives; the label is what lands in the answer file. Suffixing
+  options with `（推荐）` / `(recommended)` duplicates the hint and then leaks it
+  into the data, so every downstream consumer has to strip it. Explain the
+  recommendation in the field's `description` instead ("推荐 X：因为…"), where it
+  stays readable without contaminating the value.
 - **Speak the user's language.** Write every `title` and `description` in the
   language the user is chatting in, and say in the description what the answer
   changes downstream ("drives whether we need rate limiting").
@@ -124,8 +130,9 @@ select) before generating your own.
    answer squeezed into a one-line input, is an unfinished form.
 
 2. Run the helper script from this skill's directory — it spawns the server,
-   prints the URL, opens the user's browser, enforces the timeout, and writes
-   the answer file:
+   prints the URL, opens the user's browser, and writes the answer file. The
+   timeout is handed to the engine, which counts it down on screen and ends the
+   session itself:
 
    ```bash
    cat > /tmp/question.json <<'EOF'
@@ -152,6 +159,13 @@ select) before generating your own.
    > Form ready at http://localhost:8787 — I'll wait for you to fill it in. Your
    > answers will be saved to `.schemaui/answers/<file>.json`.
 
+   Say how long they have. The form shows a live countdown next to its title and
+   turns amber, then red, as the deadline nears — but the user has not seen it
+   yet when they read your message, so name the budget (`--timeout 300` → "about
+   5 minutes") and note that the form closes itself when it runs out. Raise
+   `--timeout` for a long form rather than letting it expire mid-fill: nothing
+   is saved on timeout, by design.
+
    On remote/headless runs pass `--no-open` and relay `SCHEMAUI_LAN_URL` (or the
    forwarded URL) instead of opening a browser locally.
 
@@ -172,7 +186,7 @@ select) before generating your own.
 | ---- | -------------------- | ------------------------------------------------------------------------------------------- |
 | 0    | answer written       | read the file, continue                                                                     |
 | 3    | schemaui not found   | offer to run `scripts/install.sh` / `install.ps1`, then retry; else fall back to plain text |
-| 4    | timeout (default 5m) | fall back to plain text, tell the user                                                      |
+| 4    | timeout (default 5m) | the form showed a countdown and closed itself; nothing was saved. Fall back to plain text, tell the user |
 | 5    | cancelled / failed   | fall back to plain text, tell the user                                                      |
 | 6    | bad schema/config    | fix the schema or fall back, tell the user                                                  |
 
@@ -186,15 +200,19 @@ schemaui web \
   --host 0.0.0.0 --port 8787 \
   --schema .schemaui/schemas/<topic>-<timestamp>.json \
   --title "<question summary>" \
+  --timeout 300 \
   --force \
   -o .schemaui/answers/<topic>-<timestamp>.json
 ```
 
 The server announces `<title> schemaui UI available at http://<addr>/` on
-stderr. Port 8787 busy → retry once with `--port 0` and parse the `http://…`
-line from stderr. Optional stdout echo: append `-` after the answer path
-(`-o <file> -`) — only when your runtime shows tool output live and the JSON is
-small; default is file-only.
+stderr, followed by `Session closes automatically in <budget>` when a
+`--timeout` was given — that second line is how you learn the deadline without
+parsing the UI. Port 8787 busy → retry once with `--port 0` and parse the
+`http://…` line from stderr. A session that hits its deadline exits **4** and
+writes nothing; drop `--timeout` (or pass `0`) for no deadline at all. Optional
+stdout echo: append `-` after the answer path (`-o <file> -`) — only when your
+runtime shows tool output live and the JSON is small; default is file-only.
 
 ## Sensitive input
 
