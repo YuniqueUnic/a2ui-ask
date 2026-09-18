@@ -98,6 +98,12 @@ cargo, manual): see `install.md` in this repository.
 | short text input      | `{"type": "string", "minLength": …, "pattern": …}`                        | inline text field                |
 | long text input       | `{"type": "string", "x-multiline": true}`                                 | multi-line text area             |
 | number                | `{"type": "integer", "minimum": …, "maximum": …}`                         | numeric field with guards        |
+| number on a scale     | `{"type": "…", "minimum": …, "maximum": …, "x-control": "slider"}`        | slider with a live readout       |
+| slider with labels    | slider + `"x-slider-marks": [{"value": …, "label": …}, …]`                | slider with labelled stops       |
+| two-number interval   | `{"type": "array", "items": {"type": "number"}, "minItems": 2, "maxItems": 2, "minimum": …, "maximum": …, "x-control": "range"}` | two-handle range slider |
+| colour                | `{"type": "string", "x-control": "color"}`                                | colour picker, not a text box    |
+| few short options     | `{"type": "string", "enum": [...], "x-control": "segmented"}`             | inline segmented control         |
+| few verbose options   | `{"type": "string", "enum": [...], "x-control": "radio"}`                 | stacked radio group              |
 | yes/no                | `{"type": "boolean"}`                                                     | toggle                           |
 | single select         | `{"type": "string", "enum": [...]}`                                       | popup selector                   |
 | multi select          | `{"type": "array", "items": {"enum": [...]}, "uniqueItems": true}`        | checkbox list (one per option)   |
@@ -113,13 +119,22 @@ applies conditionally (`has_changes` → `change_notes`, `cache.enabled` →
 `cache.ttl_seconds`). `x-multiline` is for anything you would expect the user to
 write more than one line into — a goal, a description, a change log.
 
-Both hints need `schemaui-cli` ≥ 0.7.7 (`schemaui` ≥ 0.13.0). An older engine
-ignores unknown `x-` keywords, so the form still runs — it just shows every
-field and single-line inputs.
+`x-control` is a *request*, and bounds stay validation keywords: a slider needs
+`minimum`/`maximum` on the value, and a hint the engine cannot honour (or does
+not know) falls back to that shape's default control rather than failing. Ask
+for a control when the default is genuinely worse — a percentage the user
+drags, a two-end window, a colour — not for every number on the form.
+
+Slider/range/colour/segmented/radio hints need a newer engine than the two text
+hints alone. `schemaui` ≥ 0.14 / `schemaui-cli` ≥ 0.8 draws them; an older
+engine ignores unknown `x-` keywords, so the form still runs — it just shows
+plain inputs everywhere.
 
 Read `examples/feature-brief.schema.json` (English, every control type) and
 `examples/invoice-reimbursement.schema.json` (Chinese, escape hatches on every
-select) before generating your own.
+select) before generating your own. The engine's own gallery,
+[`schemaui/examples/controls-gallery.schema.json`](https://github.com/YuniqueUnic/schemaui/blob/main/examples/controls-gallery.schema.json),
+shows every hint value side by side.
 
 ## Steps
 

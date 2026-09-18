@@ -52,6 +52,7 @@ FEATURE_BRIEF_ANSWER = {
     "cache": {"enabled": True, "backend": "redis", "ttl_seconds": 600},
     "endpoints": [{"method": "POST", "path": "/api/invites", "auth_required": True}],
     "labels": {"team": "growth"},
+    "rollout": {"rollout_percent": 20, "confidence": 0.8, "business_hours": [9, 17], "accent_color": "#6366f1"},
 }
 
 # The launcher matrix every e2e test runs against. Both twins must keep the same
@@ -341,7 +342,7 @@ def test_e2e_feature_brief_full_control_showcase(tmp_path: Path):
         ]
         # single/multi select, text, number, boolean, oneOf composition,
         # nested object, list of records, key/value map — all present
-        assert len(session["ui_ast"]["roots"]) == 12
+        assert len(session["ui_ast"]["roots"]) == 13
         assert {"field", "array", "composite", "object", "key_value"} <= set(kinds)
 
         # presentation hints survive the trip to the browser: the escape-hatch
@@ -356,6 +357,13 @@ def test_e2e_feature_brief_full_control_showcase(tmp_path: Path):
         assert by_pointer["/breaking_change_notes"]["kind"]["multiline"] is True
         assert by_pointer["/cache/ttl_seconds"]["visible_when"]["field"] == "enabled"
         assert by_pointer["/owner_email"]["visible_when"] is None
+
+        # the x-control hints on the rollout section also survive: slider /
+        # range / colour arrive as the control the schema asked for.
+        assert by_pointer["/rollout/rollout_percent"]["control"] == "slider"
+        assert by_pointer["/rollout/business_hours"]["control"] == "range"
+        assert by_pointer["/rollout/accent_color"]["control"] == "color"
+        assert by_pointer["/rollout/rollout_percent"]["bounds"]["step"] == 5.0
 
         answer = tmp_path / read_until(proc, "SCHEMAUI_ANSWER=").strip().split("=", 1)[1]
         drive_session(url, FEATURE_BRIEF_ANSWER)

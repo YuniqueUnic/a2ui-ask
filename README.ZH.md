@@ -11,6 +11,10 @@
 
 ![a2ui-ask form UI — schema navigation, form editor, and live JSON preview](./docs/web-ui.png)
 
+引擎能画的所有控件——滑块、带刻度的范围滑块、分段控件、单选组、开关、
+自定义取色器、条件字段——全部由 schema 提示驱动。完整清单见
+[`schemaui` 控件画廊](https://github.com/YuniqueUnic/schemaui/blob/main/examples/controls-gallery.schema.json)。
+
 ## 为什么需要它
 
 Agent 的工具调用跑在**没有 TTY** 的子进程里——终端提示符根本渲染不出 来，agent

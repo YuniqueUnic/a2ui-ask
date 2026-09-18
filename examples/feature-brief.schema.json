@@ -3,7 +3,12 @@
   "title": "Feature Requirements Brief",
   "description": "Example of an agent grilling its user before building a feature: every question ships with a recommended answer as the default. Covers every control type schemaui renders.",
   "type": "object",
-  "required": ["feature_name", "target_release", "platforms", "storage"],
+  "required": [
+    "feature_name",
+    "target_release",
+    "platforms",
+    "storage"
+  ],
   "properties": {
     "feature_name": {
       "type": "string",
@@ -23,7 +28,12 @@
       "type": "string",
       "title": "Target release",
       "description": "Single-select: which train should this ship on?",
-      "enum": ["next-minor", "next-major", "patch", "unscheduled"],
+      "enum": [
+        "next-minor",
+        "next-major",
+        "patch",
+        "unscheduled"
+      ],
       "default": "next-minor"
     },
     "platforms": {
@@ -32,11 +42,22 @@
       "description": "Multi-select: every surface that must ship this feature.",
       "items": {
         "type": "string",
-        "enum": ["macos", "linux", "windows", "web", "ios", "android"]
+        "enum": [
+          "macos",
+          "linux",
+          "windows",
+          "web",
+          "ios",
+          "android"
+        ]
       },
       "uniqueItems": true,
       "minItems": 1,
-      "default": ["macos", "linux", "windows"]
+      "default": [
+        "macos",
+        "linux",
+        "windows"
+      ]
     },
     "expected_daily_users": {
       "type": "integer",
@@ -56,7 +77,11 @@
       "type": "string",
       "title": "What breaks",
       "description": "Only asked once you flag a breaking change: what breaks, and how do existing users migrate?",
-      "x-visible-when": { "field": "breaking_change", "op": "equals", "value": true },
+      "x-visible-when": {
+        "field": "breaking_change",
+        "op": "equals",
+        "value": true
+      },
       "x-multiline": true
     },
     "owner_email": {
@@ -74,7 +99,10 @@
           "title": "PostgreSQL",
           "type": "object",
           "properties": {
-            "kind": { "type": "string", "const": "postgres" },
+            "kind": {
+              "type": "string",
+              "const": "postgres"
+            },
             "connection_string": {
               "type": "string",
               "description": "postgres://user@host:5432/db"
@@ -86,32 +114,45 @@
               "default": 10
             }
           },
-          "required": ["kind", "connection_string"]
+          "required": [
+            "kind",
+            "connection_string"
+          ]
         },
         {
           "title": "SQLite",
           "type": "object",
           "properties": {
-            "kind": { "type": "string", "const": "sqlite" },
+            "kind": {
+              "type": "string",
+              "const": "sqlite"
+            },
             "file_path": {
               "type": "string",
               "default": "./data/app.db"
             }
           },
-          "required": ["kind"]
+          "required": [
+            "kind"
+          ]
         },
         {
           "title": "In-memory (ephemeral)",
           "type": "object",
           "properties": {
-            "kind": { "type": "string", "const": "memory" },
+            "kind": {
+              "type": "string",
+              "const": "memory"
+            },
             "max_entries": {
               "type": "integer",
               "minimum": 100,
               "default": 10000
             }
           },
-          "required": ["kind"]
+          "required": [
+            "kind"
+          ]
         }
       ]
     },
@@ -126,16 +167,27 @@
         },
         "backend": {
           "type": "string",
-          "enum": ["memory", "redis"],
+          "enum": [
+            "memory",
+            "redis"
+          ],
           "default": "memory",
-          "x-visible-when": { "field": "enabled", "op": "equals", "value": true }
+          "x-visible-when": {
+            "field": "enabled",
+            "op": "equals",
+            "value": true
+          }
         },
         "ttl_seconds": {
           "type": "integer",
           "minimum": 1,
           "maximum": 86400,
           "default": 300,
-          "x-visible-when": { "field": "enabled", "op": "equals", "value": true }
+          "x-visible-when": {
+            "field": "enabled",
+            "op": "equals",
+            "value": true
+          }
         }
       }
     },
@@ -148,7 +200,12 @@
         "properties": {
           "method": {
             "type": "string",
-            "enum": ["GET", "POST", "PUT", "DELETE"],
+            "enum": [
+              "GET",
+              "POST",
+              "PUT",
+              "DELETE"
+            ],
             "default": "POST"
           },
           "path": {
@@ -161,19 +218,100 @@
             "default": true
           }
         },
-        "required": ["method", "path"]
+        "required": [
+          "method",
+          "path"
+        ]
       },
       "default": [
-        { "method": "POST", "path": "/api/invites", "auth_required": true }
+        {
+          "method": "POST",
+          "path": "/api/invites",
+          "auth_required": true
+        }
       ]
     },
     "labels": {
       "type": "object",
       "title": "Labels",
       "description": "Key/value map: free-form tags for dashboards and cost tracking.",
-      "propertyNames": { "pattern": "^[a-z][a-z0-9_]*$" },
-      "additionalProperties": { "type": "string" },
-      "default": { "team": "growth", "cost-center": "eng" }
+      "propertyNames": {
+        "pattern": "^[a-z][a-z0-9_]*$"
+      },
+      "additionalProperties": {
+        "type": "string"
+      },
+      "default": {
+        "team": "growth",
+        "cost-center": "eng"
+      }
+    },
+    "rollout": {
+      "type": "object",
+      "title": "Rollout",
+      "description": "Knobs that show the presentation hints: sliders, a range, and a colour.",
+      "properties": {
+        "rollout_percent": {
+          "type": "integer",
+          "title": "Rollout percentage",
+          "description": "Share of traffic in the first wave. Drag the slider; 10 means 10% of sessions.",
+          "minimum": 0,
+          "maximum": 100,
+          "multipleOf": 5,
+          "default": 20,
+          "x-control": "slider",
+          "x-slider-marks": [
+            {
+              "value": 0,
+              "label": "0"
+            },
+            {
+              "value": 50,
+              "label": "50"
+            },
+            {
+              "value": 100,
+              "label": "all"
+            }
+          ]
+        },
+        "confidence": {
+          "type": "number",
+          "title": "Confidence",
+          "description": "Your confidence in this plan, 0-1. A fractional slider, so small steps matter more than round numbers.",
+          "minimum": 0,
+          "maximum": 1,
+          "default": 0.8,
+          "x-control": "slider"
+        },
+        "business_hours": {
+          "type": "array",
+          "title": "Deploy window (hours)",
+          "description": "Two handles: the low and high hour bounding the deploy window, in server time.",
+          "items": {
+            "type": "integer"
+          },
+          "minItems": 2,
+          "maxItems": 2,
+          "minimum": 0,
+          "maximum": 24,
+          "default": [
+            9,
+            17
+          ],
+          "x-control": "range"
+        },
+        "accent_color": {
+          "type": "string",
+          "title": "Banner accent colour",
+          "description": "Hex colour for the feature flag banner. Pick it; the hex string is stored either way.",
+          "default": "#6366f1",
+          "x-control": "color"
+        }
+      },
+      "required": [
+        "rollout_percent"
+      ]
     }
   }
 }

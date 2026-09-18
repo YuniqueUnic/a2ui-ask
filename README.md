@@ -13,6 +13,12 @@ you and the agent can re-read later.
 
 ![a2ui-ask form UI — schema navigation, form editor, and live JSON preview](./docs/web-ui.png)
 
+Every control the engine can draw — sliders, range sliders with marks,
+segmented controls, radio groups, switches, a custom color picker, conditional
+fields — driven entirely by schema hints. See
+[`schemaui`'s controls gallery](https://github.com/YuniqueUnic/schemaui/blob/main/examples/controls-gallery.schema.json)
+for the full set.
+
 ## Why
 
 Agent tool calls run in subprocesses with **no TTY** — a terminal prompt renders

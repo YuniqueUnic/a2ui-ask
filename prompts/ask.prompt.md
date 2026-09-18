@@ -29,9 +29,15 @@ NOT ask in plain text. Spawn a schemaui Web form and write the result to a file.
   `<field>_custom` input gated by `x-visible-when`, so it appears only once the
   user picks it (`"op": "contains"` for a multi-select). Mark long-form answers
   `x-multiline` so they get a text area instead of a one-line input.
+- Reach for `x-control` only when the default control is genuinely worse:
+  `"slider"` for a number the user drags along a scale (needs `minimum` /
+  `maximum`), `"range"` for a two-number window, `"color"` for colours,
+  `"segmented"` for 2–4 very short options, `"radio"` when option labels need a
+  full line each. Everything else should stay on its default — a form where
+  every field is a special case is harder to fill, not easier.
 - Question-type cheat sheet (single/multi select, oneOf composition, key/value
-  maps, …): see `SKILL.md` and the 12-question showcase
-  `examples/feature-brief.schema.json`.
+  maps, sliders, ranges, colour pickers, …): see `SKILL.md` and the 12-question
+  showcase `examples/feature-brief.schema.json`.
 
 ## Preferred path: the helper script
 
