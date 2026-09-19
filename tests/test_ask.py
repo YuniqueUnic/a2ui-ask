@@ -238,13 +238,17 @@ def test_supports_native_timeout_reads_the_help_output(tmp_path, monkeypatch):
     fake.write_text(
         "import sys\n"
         "print('Usage: schemaui web [OPTIONS]')\n"
-        "print('      --timeout <SECONDS>  abort the session after this long')\n"
+        "print('      --timeout <SECONDS>  abort the session after this long')\n",
+        encoding="utf-8",
     )
     monkeypatch.setenv("SCHEMAUI_BIN", f"{sys.executable} {fake}")
     assert ask.supports_native_timeout(ask.find_binary()) is True
 
     old = tmp_path / "old-schemaui"
-    old.write_text("#!/bin/sh\necho 'Usage: schemaui web [OPTIONS]'\necho '  -o, --output'\n")
+    old.write_text(
+        "#!/bin/sh\necho 'Usage: schemaui web [OPTIONS]'\necho '  -o, --output'\n",
+        encoding="utf-8",
+    )
     old.chmod(0o755)
     assert ask.supports_native_timeout(str(old)) is False
 
@@ -253,13 +257,25 @@ def test_supports_native_timeout_survives_a_broken_binary(tmp_path: Path):
     # The probe must not turn an unhelpful binary into a crash; falling back to
     # the wrapper's own timer is always safe.
     broken = tmp_path / "broken"
-    broken.write_text("#!/bin/sh\nexit 127\n")
+    broken.write_text("#!/bin/sh\nexit 127\n", encoding="utf-8")
     broken.chmod(0o755)
     assert ask.supports_native_timeout(str(broken)) is False
     assert ask.supports_native_timeout(str(tmp_path / "does-not-exist")) is False
 
 
 # ----------------------------------------------------------------- e2e tests
+
+# Every text boundary in this suite is UTF-8 by contract: ask.py pins its own
+# stdio to UTF-8 and writes its artifacts that way, and schemaui writes UTF-8.
+# Left to the platform default (cp1252 on Windows) Python raises on the first
+# non-ASCII byte, which is how the Chinese example first broke windows-latest —
+# so each read, write and spawn below names its codec instead of inheriting one
+# from the host.
+
+
+def read_json(path: Path) -> object:
+    """Parse a JSON artifact a run wrote; those are UTF-8 by contract."""
+    return json.loads(path.read_text(encoding="utf-8"))
 
 
 def read_until(proc: subprocess.Popen, marker: str, timeout: float = 30) -> str:
@@ -310,6 +326,7 @@ def test_e2e_commit_writes_answer(tmp_path: Path, launcher: list[str]):
         stdout=subprocess.PIPE,
         stderr=subprocess.DEVNULL,
         text=True,
+        encoding="utf-8",
     )
     try:
         url_line = read_until(proc, "SCHEMAUI_URL=")
@@ -320,7 +337,7 @@ def test_e2e_commit_writes_answer(tmp_path: Path, launcher: list[str]):
         assert proc.wait(timeout=15) == 0
     finally:
         proc.kill() if proc.poll() is None else None
-    assert json.loads(answer.read_text()) == ANSWER
+    assert read_json(answer) == ANSWER
 
 
 @needs_binary
@@ -346,6 +363,7 @@ def test_e2e_powershell_commit(tmp_path: Path):
         stdout=subprocess.PIPE,
         stderr=subprocess.DEVNULL,
         text=True,
+        encoding="utf-8",
     )
     try:
         url = read_until(proc, "SCHEMAUI_URL=").strip().split("=", 1)[1]
@@ -354,7 +372,7 @@ def test_e2e_powershell_commit(tmp_path: Path):
         assert proc.wait(timeout=15) == 0
     finally:
         proc.kill() if proc.poll() is None else None
-    assert json.loads(answer.read_text()) == ANSWER
+    assert read_json(answer) == ANSWER
 
 
 def collect_nodes(nodes: list[dict]) -> list[dict]:
@@ -388,6 +406,7 @@ def test_e2e_feature_brief_full_control_showcase(tmp_path: Path):
         stdout=subprocess.PIPE,
         stderr=subprocess.DEVNULL,
         text=True,
+        encoding="utf-8",
     )
     try:
         url = read_until(proc, "SCHEMAUI_URL=").strip().split("=", 1)[1].rstrip("/")
@@ -427,7 +446,7 @@ def test_e2e_feature_brief_full_control_showcase(tmp_path: Path):
         assert proc.wait(timeout=15) == 0
     finally:
         proc.kill() if proc.poll() is None else None
-    assert json.loads(answer.read_text()) == FEATURE_BRIEF_ANSWER
+    assert read_json(answer) == FEATURE_BRIEF_ANSWER
 
 
 @needs_binary
@@ -456,6 +475,7 @@ def test_e2e_web_research_brief_covers_the_control_gallery(tmp_path: Path):
         stdout=subprocess.PIPE,
         stderr=subprocess.DEVNULL,
         text=True,
+        encoding="utf-8",
     )
     try:
         url = read_until(proc, "SCHEMAUI_URL=").strip().split("=", 1)[1].rstrip("/")
@@ -506,7 +526,7 @@ def test_e2e_web_research_brief_covers_the_control_gallery(tmp_path: Path):
         assert proc.wait(timeout=15) == 0
     finally:
         proc.kill() if proc.poll() is None else None
-    assert json.loads(answer.read_text()) == WEB_RESEARCH_ANSWER
+    assert read_json(answer) == WEB_RESEARCH_ANSWER
 
 
 @needs_binary
@@ -547,21 +567,30 @@ def test_e2e_cjk_title_survives_a_non_utf8_locale(tmp_path: Path):
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True,
-        # The script's contract is UTF-8 on both streams; decoding anything
-        # else here would hide the very regression this test is about.
+        # Strict on purpose: a codec that is not UTF-8 has to fail loudly here
+        # rather than be smoothed over by a replacement character.
         encoding="utf-8",
-        errors="replace",
     )
+    # Drained on a thread: an unread pipe would block the script once it filled,
+    # and this stream is where the regression used to die.
+    relayed: list[str] = []
+    assert proc.stderr is not None
+    pump = threading.Thread(target=lambda: relayed.extend(proc.stderr), daemon=True)
+    pump.start()
     try:
         url = read_until(proc, "SCHEMAUI_URL=").strip().split("=", 1)[1]
         answer = tmp_path / read_until(proc, "SCHEMAUI_ANSWER=").strip().split("=", 1)[1]
         drive_session(url, WEB_RESEARCH_ANSWER)
         assert proc.wait(timeout=15) == 0
         echoed = proc.stdout.read() if proc.stdout else ""
+        pump.join(timeout=5)
     finally:
         proc.kill() if proc.poll() is None else None
-    assert json.loads(answer.read_text(encoding="utf-8")) == WEB_RESEARCH_ANSWER
+    assert read_json(answer) == WEB_RESEARCH_ANSWER
+    # Both directions: the payload we print back, and the engine's title we
+    # relay — the line whose decode used to kill the pump.
     assert "最近三个月发布的新款新能源车" in echoed
+    assert "联网调研任务确认" in "".join(relayed)
 
 
 @needs_binary
@@ -582,6 +611,7 @@ def test_e2e_timeout_kills_session(tmp_path: Path, launcher: list[str]):
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True,
+        encoding="utf-8",
     )
     read_until(proc, "SCHEMAUI_URL=")
     assert proc.wait(timeout=15) == ask.EXIT_TIMEOUT
@@ -613,6 +643,7 @@ def test_e2e_timeout_is_announced_on_stderr(tmp_path: Path, launcher: list[str])
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True,
+        encoding="utf-8",
     )
     try:
         read_until(proc, "SCHEMAUI_URL=")
@@ -658,8 +689,9 @@ def test_e2e_stdin_schema_is_persisted(tmp_path: Path):
         stdout=subprocess.PIPE,
         stderr=subprocess.DEVNULL,
         text=True,
+        encoding="utf-8",
     )
-    proc.stdin.write(EXAMPLE_SCHEMA.read_text())
+    proc.stdin.write(EXAMPLE_SCHEMA.read_text(encoding="utf-8"))
     proc.stdin.close()
     try:
         url = read_until(proc, "SCHEMAUI_URL=").strip().split("=", 1)[1]
@@ -669,10 +701,10 @@ def test_e2e_stdin_schema_is_persisted(tmp_path: Path):
         proc.kill() if proc.poll() is None else None
     schemas = list(tmp_path.glob(".schemaui/schemas/inline-question-*.json"))
     assert len(schemas) == 1
-    assert json.loads(schemas[0].read_text())["title"] == "Deployment Environment"
+    assert read_json(schemas[0])["title"] == "Deployment Environment"
     answers = list(tmp_path.glob(".schemaui/answers/inline-question-*.json"))
     assert len(answers) == 1
-    assert json.loads(answers[0].read_text()) == ANSWER
+    assert read_json(answers[0]) == ANSWER
 
 
 def test_missing_binary_exits_3(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
@@ -682,6 +714,7 @@ def test_missing_binary_exits_3(tmp_path: Path, monkeypatch: pytest.MonkeyPatch)
         cwd=tmp_path,
         capture_output=True,
         text=True,
+        encoding="utf-8",
     )
     assert result.returncode == ask.EXIT_NO_BINARY
     assert "not found" in result.stderr
@@ -694,6 +727,7 @@ def test_missing_schema_exits_6(tmp_path: Path):
         env={**os.environ, "SCHEMAUI_BIN": BINARY or "schemaui"},
         capture_output=True,
         text=True,
+        encoding="utf-8",
     )
     assert result.returncode == ask.EXIT_BAD_INPUT
 
@@ -733,6 +767,7 @@ def test_install_sh_dry_run_detects_platform():
         env=env,
         capture_output=True,
         text=True,
+        encoding="utf-8",
         timeout=60,
     )
     assert result.returncode == 0, result.stderr
@@ -750,6 +785,7 @@ def test_install_sh_reports_existing_binary():
         env={**os.environ, "PATH": f"{Path(BINARY).parent}:/usr/bin:/bin"},
         capture_output=True,
         text=True,
+        encoding="utf-8",
         timeout=30,
     )
     assert result.returncode == 0
@@ -766,6 +802,7 @@ def test_install_ps1_dry_run_and_platform_guard():
         [PWSH, "-NoProfile", "-Command", script],
         capture_output=True,
         text=True,
+        encoding="utf-8",
         timeout=60,
     )
     if sys.platform == "win32":
