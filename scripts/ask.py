@@ -251,6 +251,8 @@ def supports_native_timeout(binary: str) -> bool:
             [*argv, "--help"],
             capture_output=True,
             text=True,
+            encoding="utf-8",
+            errors="replace",
             timeout=10,
         )
     except (OSError, subprocess.SubprocessError):
@@ -326,6 +328,14 @@ def run_session(
         stdout=None if args.stdout_echo else subprocess.DEVNULL,
         stderr=subprocess.PIPE,
         text=True,
+        # schemaui writes UTF-8, and its first stderr line echoes the form
+        # title. Decoding that with the platform's default codec (cp1252 on
+        # Windows, ascii under LC_ALL=C) raises UnicodeDecodeError on the
+        # title's first non-ASCII byte, which kills the pump thread below —
+        # the URL is never relayed, no answer is committed, and the run fails
+        # with nothing on screen to explain why. Pin the codec instead.
+        encoding="utf-8",
+        errors="replace",
     )
     announced = False
     if args.timeout <= 0:
@@ -408,7 +418,25 @@ def run_session(
     return EXIT_OK, True
 
 
+def force_utf8_stdio() -> None:
+    """Pin our own stdio to UTF-8 instead of the platform's default codec.
+
+    Every string crossing these streams is user text in the user's own
+    language: the form title, a schema piped in with `--schema -`, the answer
+    payload echoed back. A Windows console defaults to cp1252, where printing
+    Chinese raises UnicodeEncodeError and a piped schema is decoded and
+    re-encoded into mojibake; stdout is also the contract agents read, and
+    they expect UTF-8. UTF-8 encodes every character, so the error handler
+    only has to absorb a lone surrogate rather than raise.
+    """
+    for stream in (sys.stdin, sys.stdout, sys.stderr):
+        reconfigure = getattr(stream, "reconfigure", None)
+        if reconfigure is not None:
+            reconfigure(encoding="utf-8", errors="replace")
+
+
 def main(argv: list[str] | None = None) -> int:
+    force_utf8_stdio()
     args = parse_args(argv or sys.argv[1:])
 
     binary = find_binary()

@@ -510,6 +510,61 @@ def test_e2e_web_research_brief_covers_the_control_gallery(tmp_path: Path):
 
 
 @needs_binary
+def test_e2e_cjk_title_survives_a_non_utf8_locale(tmp_path: Path):
+    """A Chinese form must round-trip where the platform codec is not UTF-8.
+
+    schemaui writes UTF-8 and its first stderr line echoes the form title, so
+    decoding that stream with the platform's codec (cp1252 on Windows) used to
+    kill ask.py's stderr pump: no URL was announced, no answer was committed,
+    exit 5 with nothing on screen. The answer payload echo covers the write
+    side, which fails the same way on the way out. LC_ALL=C reproduces both on
+    POSIX; Windows reaches them without help.
+    """
+    env = {
+        **os.environ,
+        "LC_ALL": "C",
+        "LANG": "C",
+        "PYTHONUTF8": "0",
+        "PYTHONCOERCECLOCALE": "0",
+        "SCHEMAUI_BIN": BINARY or "schemaui",
+    }
+    proc = subprocess.Popen(
+        [
+            sys.executable,
+            str(PY_SCRIPT),
+            "--schema",
+            str(WEB_RESEARCH_SCHEMA),
+            "--config",
+            str(WEB_RESEARCH_DEFAULTS),
+            "--title",
+            "联网调研任务确认",
+            "--port",
+            "0",
+            "--no-open",
+        ],
+        cwd=tmp_path,
+        env=env,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        # The script's contract is UTF-8 on both streams; decoding anything
+        # else here would hide the very regression this test is about.
+        encoding="utf-8",
+        errors="replace",
+    )
+    try:
+        url = read_until(proc, "SCHEMAUI_URL=").strip().split("=", 1)[1]
+        answer = tmp_path / read_until(proc, "SCHEMAUI_ANSWER=").strip().split("=", 1)[1]
+        drive_session(url, WEB_RESEARCH_ANSWER)
+        assert proc.wait(timeout=15) == 0
+        echoed = proc.stdout.read() if proc.stdout else ""
+    finally:
+        proc.kill() if proc.poll() is None else None
+    assert json.loads(answer.read_text(encoding="utf-8")) == WEB_RESEARCH_ANSWER
+    assert "最近三个月发布的新款新能源车" in echoed
+
+
+@needs_binary
 @pytest.mark.parametrize("launcher", LAUNCHERS)
 def test_e2e_timeout_kills_session(tmp_path: Path, launcher: list[str]):
     proc = subprocess.Popen(
