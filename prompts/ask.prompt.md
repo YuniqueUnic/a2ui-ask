@@ -139,9 +139,9 @@ countdown in the form and closes the session itself, so the user is never
 surprised. `0` means no deadline.
 
 The script hands `--timeout` straight through when the installed engine
-understands it (it probes `--help` once), and otherwise falls back to killing the
-process after the same interval — so the flag behaves the same either way, but
-only a capable engine can warn the user first.
+understands it (it probes `--help` once), and otherwise falls back to killing
+the process after the same interval — so the flag behaves the same either way,
+but only a capable engine can warn the user first.
 
 On timeout: exit code is `4`, nothing was written, fall back to text questions,
 and tell the user the form closed itself. Only kill the process yourself if the

@@ -126,14 +126,14 @@ Windows / PowerShell 7+:`pwsh scripts/ask.ps1 -Schema … -Title …`。没有 P
 [`examples/`](./examples/) 里可直接运行的表单 (每个都带 `.defaults.json`
 推荐答案):
 
-| 示例                                                                                              | 场景                                                      |
-| ------------------------------------------------------------------------------------------------- | --------------------------------------------------------- |
-| [`env-schema.json`](./examples/env-schema.json)                                                   | 最小 4 字段部署表单 —— 首次冒烟测试                       |
-| [`web-research-brief.schema.json`](./examples/web-research-brief.schema.json)                     | 调研：联网调研任务确认 —— 用上画廊全部控件 (中文)         |
-| [`feature-brief.schema.json`](./examples/feature-brief.schema.json)                               | 12 问需求简报，覆盖全部控件类型 (英文)                    |
-| [`invoice-reimbursement.schema.json`](./examples/invoice-reimbursement.schema.json)               | 办公：发票报销处理 (中文，每个选择带「其他」逃生口)       |
-| [`ecommerce-main-image.schema.json`](./examples/ecommerce-main-image.schema.json)                 | 设计：电商主图 —— 尺寸、字号、颜色、渐变背景 (中文)       |
-| [`seo-diagnosis.schema.json`](./examples/seo-diagnosis.schema.json)                               | SEO 排查：站点、问题、关键词、竞品 (中文)                 |
+| 示例                                                                                | 场景                                                |
+| ----------------------------------------------------------------------------------- | --------------------------------------------------- |
+| [`env-schema.json`](./examples/env-schema.json)                                     | 最小 4 字段部署表单 —— 首次冒烟测试                 |
+| [`web-research-brief.schema.json`](./examples/web-research-brief.schema.json)       | 调研：联网调研任务确认 —— 用上画廊全部控件 (中文)   |
+| [`feature-brief.schema.json`](./examples/feature-brief.schema.json)                 | 12 问需求简报，覆盖全部控件类型 (英文)              |
+| [`invoice-reimbursement.schema.json`](./examples/invoice-reimbursement.schema.json) | 办公：发票报销处理 (中文，每个选择带「其他」逃生口) |
+| [`ecommerce-main-image.schema.json`](./examples/ecommerce-main-image.schema.json)   | 设计：电商主图 —— 尺寸、字号、颜色、渐变背景 (中文) |
+| [`seo-diagnosis.schema.json`](./examples/seo-diagnosis.schema.json)                 | SEO 排查：站点、问题、关键词、竞品 (中文)           |
 
 ## 脚本契约
 

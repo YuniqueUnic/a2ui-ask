@@ -13,10 +13,10 @@ you and the agent can re-read later.
 
 ![a2ui-ask form UI — schema navigation, form editor, and live JSON preview](./docs/web-ui.png)
 
-Every control the engine can draw — sliders, range sliders with marks,
-segmented controls, radio groups, switches, a custom color picker, conditional
-fields — driven entirely by schema hints, and the skill tells the agent to reach
-for them. The full set lives in
+Every control the engine can draw — sliders, range sliders with marks, segmented
+controls, radio groups, switches, a custom color picker, conditional fields —
+driven entirely by schema hints, and the skill tells the agent to reach for
+them. The full set lives in
 [`schemaui`'s controls gallery](https://github.com/YuniqueUnic/schemaui/blob/main/examples/controls-gallery.schema.json);
 [`examples/web-research-brief.schema.json`](./examples/web-research-brief.schema.json)
 is the worked example that uses every one of them (中文).
@@ -135,14 +135,14 @@ without Python: `bash scripts/ask.sh --schema …`.
 Runnable forms in [`examples/`](./examples/) (each with recommended answers in
 the matching `.defaults.json`):
 
-| Example                                                                                           | Scenario                                                                          |
-| ------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
-| [`env-schema.json`](./examples/env-schema.json)                                                   | minimal 4-field deploy form — first smoke test                                    |
-| [`web-research-brief.schema.json`](./examples/web-research-brief.schema.json)                     | research: scope a web-research task — every control in the gallery (中文)         |
-| [`feature-brief.schema.json`](./examples/feature-brief.schema.json)                               | 12-question requirements brief using every control type (EN)                      |
-| [`invoice-reimbursement.schema.json`](./examples/invoice-reimbursement.schema.json)               | office: invoice & expense reimbursement (中文)                                    |
-| [`ecommerce-main-image.schema.json`](./examples/ecommerce-main-image.schema.json)                 | design: e-commerce hero images — sizes, fonts, colors, backgrounds (中文)         |
-| [`seo-diagnosis.schema.json`](./examples/seo-diagnosis.schema.json)                               | SEO triage: site, issues, keywords, competitors (中文)                            |
+| Example                                                                             | Scenario                                                                  |
+| ----------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| [`env-schema.json`](./examples/env-schema.json)                                     | minimal 4-field deploy form — first smoke test                            |
+| [`web-research-brief.schema.json`](./examples/web-research-brief.schema.json)       | research: scope a web-research task — every control in the gallery (中文) |
+| [`feature-brief.schema.json`](./examples/feature-brief.schema.json)                 | 12-question requirements brief using every control type (EN)              |
+| [`invoice-reimbursement.schema.json`](./examples/invoice-reimbursement.schema.json) | office: invoice & expense reimbursement (中文)                            |
+| [`ecommerce-main-image.schema.json`](./examples/ecommerce-main-image.schema.json)   | design: e-commerce hero images — sizes, fonts, colors, backgrounds (中文) |
+| [`seo-diagnosis.schema.json`](./examples/seo-diagnosis.schema.json)                 | SEO triage: site, issues, keywords, competitors (中文)                    |
 
 ## Script contract
 

@@ -180,7 +180,16 @@
       "type": "string",
       "title": "目标市场",
       "description": "决定优先检索哪个地区的信源与价格;选项较多,用下拉选择最省地方。",
-      "enum": ["中国大陆", "中国港澳台", "北美", "欧洲", "东南亚", "日韩", "中东", "其他"],
+      "enum": [
+        "中国大陆",
+        "中国港澳台",
+        "北美",
+        "欧洲",
+        "东南亚",
+        "日韩",
+        "中东",
+        "其他"
+      ],
       "default": "中国大陆"
     },
     "market_custom": {
@@ -214,7 +223,11 @@
       "type": "string",
       "title": "报告详略 · 自定义说明",
       "description": "选了「其他」时填写,例如「一页 A4 的决策备忘」。",
-      "x-visible-when": { "field": "report_style", "op": "equals", "value": "其他" }
+      "x-visible-when": {
+        "field": "report_style",
+        "op": "equals",
+        "value": "其他"
+      }
     },
     "urgency": {
       "type": "integer",
@@ -269,7 +282,11 @@
       "minimum": 0,
       "maximum": 24,
       "x-control": "range",
-      "x-visible-when": { "field": "run_mode", "op": "equals", "value": "定时跟踪" },
+      "x-visible-when": {
+        "field": "run_mode",
+        "op": "equals",
+        "value": "定时跟踪"
+      },
       "default": [8, 22]
     },
     "track_sample_percent": {
@@ -284,7 +301,11 @@
         { "value": 0, "label": "0%" },
         { "value": 100, "label": "100%" }
       ],
-      "x-visible-when": { "field": "run_mode", "op": "equals", "value": "定时跟踪" },
+      "x-visible-when": {
+        "field": "run_mode",
+        "op": "equals",
+        "value": "定时跟踪"
+      },
       "default": 20
     },
     "source_types": {
@@ -293,7 +314,14 @@
       "description": "多选:每选中一类就会去对应的渠道找内容;列表里没有的渠道选「其他」。",
       "items": {
         "type": "string",
-        "enum": ["官方发布", "权威媒体", "行业报告", "社交平台", "电商评论", "其他"]
+        "enum": [
+          "官方发布",
+          "权威媒体",
+          "行业报告",
+          "社交平台",
+          "电商评论",
+          "其他"
+        ]
       },
       "uniqueItems": true,
       "minItems": 1,
@@ -303,7 +331,11 @@
       "type": "string",
       "title": "信源类型 · 自定义说明",
       "description": "选了「其他」时填写,例如「车主论坛」「经销商报价单」。",
-      "x-visible-when": { "field": "source_types", "op": "contains", "value": "其他" },
+      "x-visible-when": {
+        "field": "source_types",
+        "op": "contains",
+        "value": "其他"
+      },
       "x-multiline": true
     },
     "delivery": {
@@ -372,7 +404,11 @@
           "kind_custom": {
             "type": "string",
             "title": "类型 · 自定义说明",
-            "x-visible-when": { "field": "kind", "op": "equals", "value": "其他" }
+            "x-visible-when": {
+              "field": "kind",
+              "op": "equals",
+              "value": "其他"
+            }
           },
           "url": {
             "type": "string",

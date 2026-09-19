@@ -59,12 +59,12 @@ cargo, manual): see `install.md` in this repository.
 - **Every question ships a recommended answer.** Put your recommendation in the
   field's `default` so the user can confirm with one click instead of typing.
   Say in chat what you recommended and why.
-- **Keep the recommendation out of the option label.** `default` is the one place
-  the recommendation lives; the label is what lands in the answer file. Suffixing
-  options with `（推荐）` / `(recommended)` duplicates the hint and then leaks it
-  into the data, so every downstream consumer has to strip it. Explain the
-  recommendation in the field's `description` instead ("推荐 X：因为…"), where it
-  stays readable without contaminating the value.
+- **Keep the recommendation out of the option label.** `default` is the one
+  place the recommendation lives; the label is what lands in the answer file.
+  Suffixing options with `（推荐）` / `(recommended)` duplicates the hint and
+  then leaks it into the data, so every downstream consumer has to strip it.
+  Explain the recommendation in the field's `description` instead ("推荐
+  X：因为…"), where it stays readable without contaminating the value.
 - **Speak the user's language.** Write every `title` and `description` in the
   language the user is chatting in, and say in the description what the answer
   changes downstream ("drives whether we need rate limiting").
@@ -92,34 +92,34 @@ cargo, manual): see `install.md` in this repository.
   ```
 
   Use `"op": "contains"` when the controlling field is a multi-select (the
-  option list has to *contain* the escape value). The rule must name a sibling
+  option list has to _contain_ the escape value). The rule must name a sibling
   of the same object: a typo is rejected when the form loads rather than hiding
   the field forever. The controlling field's `default` must not be the escape
   value, or the input would be visible from the start.
 
 ## Question type → schema cheat sheet
 
-| You need              | Schema shape                                                              | Renders as                       |
-| --------------------- | ------------------------------------------------------------------------- | -------------------------------- |
-| short text input      | `{"type": "string", "minLength": …, "pattern": …}`                        | inline text field                |
-| long text input       | `{"type": "string", "x-multiline": true}`                                 | multi-line text area             |
-| number                | `{"type": "integer", "minimum": …, "maximum": …}`                         | numeric field with guards        |
-| number on a scale     | `{"type": "…", "minimum": …, "maximum": …, "x-control": "slider"}`        | slider with a live readout       |
-| slider with labels    | slider + `"x-slider-marks": [{"value": …, "label": …}, …]`                | slider with labelled stops       |
-| two-number interval   | `{"type": "array", "items": {"type": "number"}, "minItems": 2, "maxItems": 2, "minimum": …, "maximum": …, "x-control": "range"}` | two-handle range slider |
-| colour                | `{"type": "string", "x-control": "color"}`                                | colour picker, not a text box    |
-| few short options     | `{"type": "string", "enum": [...], "x-control": "segmented"}`             | inline segmented control         |
-| few verbose options   | `{"type": "string", "enum": [...], "x-control": "radio"}`                 | stacked radio group              |
-| yes/no                | `{"type": "boolean"}`                                                     | toggle                           |
-| yes/no, part of a set | `{"type": "boolean", "x-control": "checkbox"}`                            | checkbox                         |
-| single select         | `{"type": "string", "enum": [...]}`                                       | popup selector                   |
-| multi select          | `{"type": "array", "items": {"enum": [...]}, "uniqueItems": true}`        | checkbox list (one per option)   |
-| select + escape hatch | `enum: [..., "其他"]` plus a sibling `"<field>_custom"` carrying `x-visible-when` | selector, then a text field once 「其他」 is picked |
-| conditional field     | `"x-visible-when": {"field": <sibling>, "op": "equals"\|"contains", "value": …}` | hidden until the sibling matches |
-| pick-one-with-config  | `{"oneOf": [{"title": "A", …}, {"title": "B", …}]}`                       | variant chooser + subform        |
-| grouped fields        | `{"type": "object", "properties": {…}}`                                   | nested section                   |
-| list of records       | `{"type": "array", "items": {"type": "object", "properties": {…}}}`       | list + per-entry overlay         |
-| free-form key/value   | `{"type": "object", "additionalProperties": {"type": "string"}}`          | key/value editor                 |
+| You need              | Schema shape                                                                                                                     | Renders as                                          |
+| --------------------- | -------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------- |
+| short text input      | `{"type": "string", "minLength": …, "pattern": …}`                                                                               | inline text field                                   |
+| long text input       | `{"type": "string", "x-multiline": true}`                                                                                        | multi-line text area                                |
+| number                | `{"type": "integer", "minimum": …, "maximum": …}`                                                                                | numeric field with guards                           |
+| number on a scale     | `{"type": "…", "minimum": …, "maximum": …, "x-control": "slider"}`                                                               | slider with a live readout                          |
+| slider with labels    | slider + `"x-slider-marks": [{"value": …, "label": …}, …]`                                                                       | slider with labelled stops                          |
+| two-number interval   | `{"type": "array", "items": {"type": "number"}, "minItems": 2, "maxItems": 2, "minimum": …, "maximum": …, "x-control": "range"}` | two-handle range slider                             |
+| colour                | `{"type": "string", "x-control": "color"}`                                                                                       | colour picker, not a text box                       |
+| few short options     | `{"type": "string", "enum": [...], "x-control": "segmented"}`                                                                    | inline segmented control                            |
+| few verbose options   | `{"type": "string", "enum": [...], "x-control": "radio"}`                                                                        | stacked radio group                                 |
+| yes/no                | `{"type": "boolean"}`                                                                                                            | toggle                                              |
+| yes/no, part of a set | `{"type": "boolean", "x-control": "checkbox"}`                                                                                   | checkbox                                            |
+| single select         | `{"type": "string", "enum": [...]}`                                                                                              | popup selector                                      |
+| multi select          | `{"type": "array", "items": {"enum": [...]}, "uniqueItems": true}`                                                               | checkbox list (one per option)                      |
+| select + escape hatch | `enum: [..., "其他"]` plus a sibling `"<field>_custom"` carrying `x-visible-when`                                                | selector, then a text field once 「其他」 is picked |
+| conditional field     | `"x-visible-when": {"field": <sibling>, "op": "equals"\|"contains", "value": …}`                                                 | hidden until the sibling matches                    |
+| pick-one-with-config  | `{"oneOf": [{"title": "A", …}, {"title": "B", …}]}`                                                                              | variant chooser + subform                           |
+| grouped fields        | `{"type": "object", "properties": {…}}`                                                                                          | nested section                                      |
+| list of records       | `{"type": "array", "items": {"type": "object", "properties": {…}}}`                                                              | list + per-entry overlay                            |
+| free-form key/value   | `{"type": "object", "additionalProperties": {"type": "string"}}`                                                                 | key/value editor                                    |
 
 `x-visible-when` is not only for escape hatches: use it whenever a question only
 applies conditionally (`has_changes` → `change_notes`, `cache.enabled` →
@@ -147,19 +147,19 @@ what turns a wall of inputs into something people actually want to fill in:
 Don't make every field a special case either: a hint earns its place when it
 removes typing or removes a wrong answer, not for decoration.
 
-`x-control` is a *request*, and bounds stay validation keywords: a slider needs
+`x-control` is a _request_, and bounds stay validation keywords: a slider needs
 `minimum`/`maximum` on the value, and a hint the engine cannot honour falls back
 to that shape's default control rather than failing. Slider/range/colour/
 segmented/radio hints need `schemaui` ≥ 0.14 / `schemaui-cli` ≥ 0.8; an older
 engine ignores unknown `x-` keywords, so the form still runs — it just shows
 plain inputs everywhere.
 
-Read these before writing your own:
-`examples/web-research-brief.schema.json` (中文 — the worked reference: every
-control in the gallery, escape hatches, conditional fields, `oneOf`, a record
-list, a key/value map), `examples/feature-brief.schema.json` (English, every
-control type) and `examples/invoice-reimbursement.schema.json` (中文, escape
-hatches on every select). The engine's own gallery,
+Read these before writing your own: `examples/web-research-brief.schema.json`
+(中文 — the worked reference: every control in the gallery, escape hatches,
+conditional fields, `oneOf`, a record list, a key/value map),
+`examples/feature-brief.schema.json` (English, every control type) and
+`examples/invoice-reimbursement.schema.json` (中文, escape hatches on every
+select). The engine's own gallery,
 [`schemaui/examples/controls-gallery.schema.json`](https://github.com/YuniqueUnic/schemaui/blob/main/examples/controls-gallery.schema.json),
 shows every hint value side by side.
 
@@ -224,13 +224,13 @@ shows every hint value side by side.
 
 ## Exit codes and fallback
 
-| Code | Meaning              | Your action                                                                                 |
-| ---- | -------------------- | ------------------------------------------------------------------------------------------- |
-| 0    | answer written       | read the file, continue                                                                     |
-| 3    | schemaui not found   | offer to run `scripts/install.sh` / `install.ps1`, then retry; else fall back to plain text |
+| Code | Meaning              | Your action                                                                                              |
+| ---- | -------------------- | -------------------------------------------------------------------------------------------------------- |
+| 0    | answer written       | read the file, continue                                                                                  |
+| 3    | schemaui not found   | offer to run `scripts/install.sh` / `install.ps1`, then retry; else fall back to plain text              |
 | 4    | timeout (default 5m) | the form showed a countdown and closed itself; nothing was saved. Fall back to plain text, tell the user |
-| 5    | cancelled / failed   | fall back to plain text, tell the user                                                      |
-| 6    | bad schema/config    | fix the schema or fall back, tell the user                                                  |
+| 5    | cancelled / failed   | fall back to plain text, tell the user                                                                   |
+| 6    | bad schema/config    | fix the schema or fall back, tell the user                                                               |
 
 Never hard-fail the task because a question could not be asked.
 
@@ -271,14 +271,14 @@ something similar. Reuse a prior answer as defaults via `--config`.
 Six runnable forms live in `examples/` (each with a `.defaults.json` carrying
 the recommended answers):
 
-| Example                             | Scenario                                                                                       |
-| ----------------------------------- | ---------------------------------------------------------------------------------------------- |
-| `env-schema.json`                   | minimal 4-field deploy form — first smoke test                                                 |
-| `web-research-brief.schema.json`    | research: scope a web-research task — **every control in the gallery** (中文)                  |
-| `feature-brief.schema.json`         | 12-question requirements brief, every control type + both hints (EN)                           |
-| `invoice-reimbursement.schema.json` | office: invoice & expense reimbursement (中文, escape hatches)                                 |
-| `ecommerce-main-image.schema.json`  | design: e-commerce hero image specs — sizes, fonts, colors, oneOf backgrounds (中文)           |
-| `seo-diagnosis.schema.json`         | SEO triage: site, issues, keywords, competitors (中文)                                         |
+| Example                             | Scenario                                                                             |
+| ----------------------------------- | ------------------------------------------------------------------------------------ |
+| `env-schema.json`                   | minimal 4-field deploy form — first smoke test                                       |
+| `web-research-brief.schema.json`    | research: scope a web-research task — **every control in the gallery** (中文)        |
+| `feature-brief.schema.json`         | 12-question requirements brief, every control type + both hints (EN)                 |
+| `invoice-reimbursement.schema.json` | office: invoice & expense reimbursement (中文, escape hatches)                       |
+| `ecommerce-main-image.schema.json`  | design: e-commerce hero image specs — sizes, fonts, colors, oneOf backgrounds (中文) |
+| `seo-diagnosis.schema.json`         | SEO triage: site, issues, keywords, competitors (中文)                               |
 
 ```bash
 python3 scripts/ask.py \

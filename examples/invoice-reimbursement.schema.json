@@ -3,7 +3,12 @@
   "title": "发票报销处理",
   "description": "办公场景示例:Agent 在帮你整理报销单之前需要确认的信息。每个选项都带推荐默认值;选项不符合实际情况时选「其他」,对应的自定义输入框才会出现。",
   "type": "object",
-  "required": ["expense_type", "invoice_count", "total_amount", "invoice_title"],
+  "required": [
+    "expense_type",
+    "invoice_count",
+    "total_amount",
+    "invoice_title"
+  ],
   "properties": {
     "expense_type": {
       "type": "string",
@@ -16,7 +21,11 @@
       "type": "string",
       "title": "报销类型 · 自定义说明",
       "description": "上一题选了「其他」时必填:一句话说明这是什么费用。",
-      "x-visible-when": { "field": "expense_type", "op": "equals", "value": "其他" }
+      "x-visible-when": {
+        "field": "expense_type",
+        "op": "equals",
+        "value": "其他"
+      }
     },
     "invoice_count": {
       "type": "integer",
@@ -70,7 +79,11 @@
       "type": "string",
       "title": "抬头类型 · 自定义说明",
       "description": "抬头选了「其他」时填写,例如「事业单位」。",
-      "x-visible-when": { "field": "invoice_title", "op": "equals", "value": "其他" }
+      "x-visible-when": {
+        "field": "invoice_title",
+        "op": "equals",
+        "value": "其他"
+      }
     },
     "tax_number": {
       "type": "string",
@@ -107,7 +120,11 @@
           "kind_custom": {
             "type": "string",
             "title": "附件类型 · 自定义说明",
-            "x-visible-when": { "field": "kind", "op": "equals", "value": "其他" }
+            "x-visible-when": {
+              "field": "kind",
+              "op": "equals",
+              "value": "其他"
+            }
           },
           "filename": {
             "type": "string",
