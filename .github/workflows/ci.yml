@@ -41,6 +41,12 @@ jobs:
 
       - name: Install uv
         uses: astral-sh/setup-uv@v7
+        with:
+          # This repo declares no Python dependencies: the suite runs through
+          # `uvx pytest`, which resolves pytest on its own. Caching with no file
+          # to key on only earns a "cache will never be invalidated" warning, so
+          # turn it off rather than track nothing.
+          enable-cache: false
 
       - name: Run tests (pytest via uv; pwsh e2e runs where available)
         shell: bash
