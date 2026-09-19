@@ -161,6 +161,10 @@ SCHEMAUI_BIN=$(command -v schemaui) python3 -m pytest tests/
 # PowerShell e2e runs when pwsh is on PATH (or PWSH_BIN is set)
 ```
 
+## Links
+
+- [linux.do](https://linux.do)
+
 ## License
 
 MIT — see [LICENSE](./LICENSE).

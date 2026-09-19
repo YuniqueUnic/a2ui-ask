@@ -152,6 +152,10 @@ SCHEMAUI_BIN=$(command -v schemaui) python3 -m pytest tests/
 # pwsh 在 PATH 上(或设置 PWSH_BIN)时会自动加跑 PowerShell e2e
 ```
 
+## 链接
+
+- [linux.do](https://linux.do)
+
 ## 许可证
 
 MIT —— 见 [LICENSE](./LICENSE)。
