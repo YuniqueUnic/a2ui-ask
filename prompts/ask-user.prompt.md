@@ -5,10 +5,15 @@ When you need user input:
 1. If schemaui is available, ALWAYS prefer the a2ui-ask flow (Web form + file
    output, see `ask.prompt.md`). It gives the user a real UI with validation and
    preserves an audit trail.
-2. Only if schemaui fails or is absent, use plain text — and tell the user you
+2. In that form, give each answer the control it deserves instead of a plain
+   text box — slider, two-handle range, colour picker, segmented control, radio
+   group, checkbox, `x-visible-when` for anything conditional. The worked
+   reference covering every control is
+   `examples/web-research-brief.schema.json`; `SKILL.md` says when each fits.
+3. Only if schemaui fails or is absent, use plain text — and tell the user you
    fell back.
-3. Batch all questions into one round. Never interrogate serially.
-4. If you previously collected answers via schemaui, check `.schemaui/answers/`
+4. Batch all questions into one round. Never interrogate serially.
+5. If you previously collected answers via schemaui, check `.schemaui/answers/`
    before asking again — the user may have already answered this. Reuse prior
    answers as defaults.
 

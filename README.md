@@ -15,9 +15,11 @@ you and the agent can re-read later.
 
 Every control the engine can draw — sliders, range sliders with marks,
 segmented controls, radio groups, switches, a custom color picker, conditional
-fields — driven entirely by schema hints. See
-[`schemaui`'s controls gallery](https://github.com/YuniqueUnic/schemaui/blob/main/examples/controls-gallery.schema.json)
-for the full set.
+fields — driven entirely by schema hints, and the skill tells the agent to reach
+for them. The full set lives in
+[`schemaui`'s controls gallery](https://github.com/YuniqueUnic/schemaui/blob/main/examples/controls-gallery.schema.json);
+[`examples/web-research-brief.schema.json`](./examples/web-research-brief.schema.json)
+is the worked example that uses every one of them (中文).
 
 ## Why
 
@@ -123,21 +125,24 @@ without Python: `bash scripts/ask.sh --schema …`.
   free-text companion field, so you're never forced into a wrong option. The
   companion only appears once you actually pick the escape option, and
   paragraph-length answers get a multi-line box instead of a one-line input.
-- **A full control cheat sheet** — text, number, boolean, single/multi select,
-  oneOf compositions, nested objects, record lists, key/value maps.
+- **The right control for each answer** — sliders, marked sliders, two-handle
+  ranges, colour pickers, segmented controls, radio groups, checkboxes, and
+  conditional fields, alongside text, number, single/multi select, oneOf
+  compositions, nested objects, record lists, and key/value maps.
 
 ## Examples
 
 Runnable forms in [`examples/`](./examples/) (each with recommended answers in
 the matching `.defaults.json`):
 
-| Example                                                                             | Scenario                                                                  |
-| ----------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
-| [`env-schema.json`](./examples/env-schema.json)                                     | minimal 4-field deploy form — first smoke test                            |
-| [`feature-brief.schema.json`](./examples/feature-brief.schema.json)                 | 12-question requirements brief using every control type (EN)              |
-| [`invoice-reimbursement.schema.json`](./examples/invoice-reimbursement.schema.json) | office: invoice & expense reimbursement (中文)                            |
-| [`ecommerce-main-image.schema.json`](./examples/ecommerce-main-image.schema.json)   | design: e-commerce hero images — sizes, fonts, colors, backgrounds (中文) |
-| [`seo-diagnosis.schema.json`](./examples/seo-diagnosis.schema.json)                 | SEO triage: site, issues, keywords, competitors (中文)                    |
+| Example                                                                                           | Scenario                                                                          |
+| ------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| [`env-schema.json`](./examples/env-schema.json)                                                   | minimal 4-field deploy form — first smoke test                                    |
+| [`web-research-brief.schema.json`](./examples/web-research-brief.schema.json)                     | research: scope a web-research task — every control in the gallery (中文)         |
+| [`feature-brief.schema.json`](./examples/feature-brief.schema.json)                               | 12-question requirements brief using every control type (EN)                      |
+| [`invoice-reimbursement.schema.json`](./examples/invoice-reimbursement.schema.json)               | office: invoice & expense reimbursement (中文)                                    |
+| [`ecommerce-main-image.schema.json`](./examples/ecommerce-main-image.schema.json)                 | design: e-commerce hero images — sizes, fonts, colors, backgrounds (中文)         |
+| [`seo-diagnosis.schema.json`](./examples/seo-diagnosis.schema.json)                               | SEO triage: site, issues, keywords, competitors (中文)                            |
 
 ## Script contract
 

@@ -1,0 +1,397 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "联网调研任务确认",
+  "description": "调研场景示例:Agent 接到「上网调研最近的某个热点」这类任务时,先把调研口径一次性问清楚再动手。每个问题都带推荐默认值;选项覆盖不到时选「其他」,对应的自定义输入框才会出现。本示例刻意用上了控件画廊里的全部控件——文本、多行、普通数字、滑块(整数/步进/小数/带刻度/百分比)、双柄范围、下拉、分段、单选组、开关、复选框、取色器、条件字段——可以当作写表单时的对照参照。",
+  "type": "object",
+  "required": ["topic", "goal", "publish_age_days", "source_types", "delivery"],
+  "properties": {
+    "topic": {
+      "type": "string",
+      "title": "调研主题",
+      "description": "一句话说清要调研什么、时间范围多大;这句话会作为联网检索的主查询词。",
+      "minLength": 4,
+      "default": "最近三个月发布的新款新能源车"
+    },
+    "focus_terms": {
+      "type": "string",
+      "title": "必须命中的关键词",
+      "description": "逗号分隔;命中的页面才算相关,用来收敛噪音。",
+      "x-control": "text",
+      "default": "续航, 智能驾驶, 落地价"
+    },
+    "goal": {
+      "type": "string",
+      "title": "调研目的",
+      "description": "多行填写:这份调研要支撑什么决定。目的决定结论的取舍,写得越具体越好。",
+      "x-control": "textarea",
+      "default": "给家里换一台新能源车做决策依据:搞清楚最近三个月上市的新车各自的核心卖点、真实续航和落地价,输出一份可以直接拿去对比的材料。"
+    },
+    "background": {
+      "type": "string",
+      "title": "已知信息 / 补充说明",
+      "description": "多行填写:已经掌握的情况、已经排除的选项、需要特别留意的人或事。",
+      "x-multiline": true,
+      "default": "家里现有一台燃油车,预算 15-35 万,以市区通勤为主、偶尔跑长途。看过几篇自媒体文章,但口径互相矛盾,想要一份有出处的整理。"
+    },
+    "expected_words": {
+      "type": "number",
+      "title": "期望报告字数",
+      "description": "只是数量级,用来决定展开的详略;没有上下限,填多少都行。",
+      "default": 3000
+    },
+    "max_sources": {
+      "type": "integer",
+      "title": "最多引用信源数",
+      "description": "需要精确控制上限,所以保持数字输入框而不是滑块;超出这个数量的页面会被丢弃。",
+      "minimum": 1,
+      "maximum": 200,
+      "default": 30
+    },
+    "time_budget_minutes": {
+      "type": "integer",
+      "title": "调研耗时预算(分钟)",
+      "description": "只按 15 分钟的整数倍评估,超预算就收尾出结论;这里只做校验约束,不改变输入方式。",
+      "minimum": 0,
+      "maximum": 1440,
+      "multipleOf": 15,
+      "default": 60
+    },
+    "focus_items": {
+      "type": "integer",
+      "title": "重点展开条目数",
+      "description": "排在前面的这几条会逐条展开细节,其余的只留一句话摘要。",
+      "minimum": 1,
+      "maximum": 20,
+      "x-control": "slider",
+      "default": 8
+    },
+    "fetch_timeout_seconds": {
+      "type": "integer",
+      "title": "单个信源抓取超时(秒)",
+      "description": "按 15 秒为一档拖动;慢站超过这个时间会被跳过。",
+      "minimum": 0,
+      "maximum": 300,
+      "multipleOf": 15,
+      "x-control": "slider",
+      "default": 90
+    },
+    "relevance_floor": {
+      "type": "number",
+      "title": "相关度下限",
+      "description": "0-1 的小数,拖动时步长会自动细分成百分位;低于这条线的页面直接过滤掉。",
+      "minimum": 0,
+      "maximum": 1,
+      "x-control": "slider",
+      "default": 0.35
+    },
+    "dedup_similarity": {
+      "type": "number",
+      "title": "去重相似度阈值",
+      "description": "相似度高于这个值的内容会被判为转载并合并;按 0.05 为一档。",
+      "minimum": 0,
+      "maximum": 1,
+      "multipleOf": 0.05,
+      "x-control": "slider",
+      "default": 0.85
+    },
+    "depth_level": {
+      "type": "integer",
+      "title": "调研深度",
+      "description": "0=只看标题和摘要,2=常规,4=逐页精读并交叉验证;刻度就是档位本身。",
+      "minimum": 0,
+      "maximum": 4,
+      "x-control": "slider",
+      "x-slider-marks": [0, 1, 2, 3, 4],
+      "default": 2
+    },
+    "source_authority": {
+      "type": "integer",
+      "title": "信源权威度要求",
+      "description": "越高越偏向官方发布与行业报告,越低越愿意采纳论坛和社交平台的一手体验。",
+      "minimum": 1,
+      "maximum": 5,
+      "x-control": "slider",
+      "x-slider-marks": [
+        { "value": 1, "label": "只看体验" },
+        { "value": 3, "label": "均衡" },
+        { "value": 5, "label": "只看权威" }
+      ],
+      "default": 3
+    },
+    "freshness_weight": {
+      "type": "integer",
+      "title": "时效性权重",
+      "description": "排序时给「发布时间新」这一项的权重占比;越高越优先推最近的内容。",
+      "minimum": 0,
+      "maximum": 100,
+      "multipleOf": 5,
+      "x-control": "slider",
+      "x-slider-marks": [
+        { "value": 0, "label": "0%" },
+        { "value": 50, "label": "50%" },
+        { "value": 100, "label": "100%" }
+      ],
+      "default": 60
+    },
+    "publish_age_days": {
+      "type": "array",
+      "title": "内容发布时间范围(距今天数)",
+      "description": "两个手柄:左端是最近多少天以内,右端是最多回溯多少天;默认就是「最近 1 周到 3 个月」。",
+      "items": { "type": "integer", "minimum": 1, "maximum": 365 },
+      "minItems": 2,
+      "maxItems": 2,
+      "minimum": 1,
+      "maximum": 365,
+      "x-control": "range",
+      "default": [7, 90]
+    },
+    "price_range": {
+      "type": "array",
+      "title": "关注价格区间(元)",
+      "description": "只保留落在区间内的车型;按 1 万元为一档。",
+      "items": { "type": "integer", "minimum": 0, "maximum": 600000 },
+      "minItems": 2,
+      "maxItems": 2,
+      "minimum": 0,
+      "maximum": 600000,
+      "multipleOf": 10000,
+      "x-control": "range",
+      "x-slider-marks": [
+        { "value": 0, "label": "0" },
+        { "value": 200000, "label": "20 万" },
+        { "value": 400000, "label": "40 万" },
+        { "value": 600000, "label": "60 万" }
+      ],
+      "default": [150000, 350000]
+    },
+    "confidence_band": {
+      "type": "array",
+      "title": "结论置信区间",
+      "description": "小数区间:只保留落在这个置信度范围内的结论,过于确定或过于含糊的都不写进报告。",
+      "items": { "type": "number", "minimum": 0, "maximum": 1 },
+      "minItems": 2,
+      "maxItems": 2,
+      "minimum": 0,
+      "maximum": 1,
+      "x-control": "range",
+      "default": [0.6, 0.95]
+    },
+    "market": {
+      "type": "string",
+      "title": "目标市场",
+      "description": "决定优先检索哪个地区的信源与价格;选项较多,用下拉选择最省地方。",
+      "enum": ["中国大陆", "中国港澳台", "北美", "欧洲", "东南亚", "日韩", "中东", "其他"],
+      "default": "中国大陆"
+    },
+    "market_custom": {
+      "type": "string",
+      "title": "目标市场 · 自定义说明",
+      "description": "上一题选了「其他」时填写,例如「拉美」。",
+      "x-visible-when": { "field": "market", "op": "equals", "value": "其他" }
+    },
+    "report_language": {
+      "type": "string",
+      "title": "报告语言",
+      "description": "只有三个短选项,平铺出来比展开下拉更快。",
+      "enum": ["中文", "英文", "中英对照"],
+      "x-control": "segmented",
+      "default": "中文"
+    },
+    "report_style": {
+      "type": "string",
+      "title": "报告详略",
+      "description": "选项标签较长,竖排单选让每一项都能完整显示;都不合适就选「其他」。",
+      "enum": [
+        "结论先行(≤2 页,只给判断和建议)",
+        "标准版(5-10 页,含证据链)",
+        "尽调版(含附录与原始摘录)",
+        "其他"
+      ],
+      "x-control": "radio",
+      "default": "标准版(5-10 页,含证据链)"
+    },
+    "report_style_custom": {
+      "type": "string",
+      "title": "报告详略 · 自定义说明",
+      "description": "选了「其他」时填写,例如「一页 A4 的决策备忘」。",
+      "x-visible-when": { "field": "report_style", "op": "equals", "value": "其他" }
+    },
+    "urgency": {
+      "type": "integer",
+      "title": "紧急程度",
+      "description": "1=本周内给结论,2=两周内,3=不急;数值型枚举,分段控件按顺序渲染。",
+      "enum": [1, 2, 3],
+      "x-control": "segmented",
+      "default": 2
+    },
+    "include_charts": {
+      "type": "boolean",
+      "title": "报告含图表",
+      "description": "开关:立即生效的单一选择,打开后会生成价格与续航的对比图。",
+      "default": true
+    },
+    "include_competitor_pricing": {
+      "type": "boolean",
+      "title": "纳入竞品价格对比",
+      "description": "勾选式:它属于「要不要一起比价」这类集合里的一项,所以用复选框而不是开关。",
+      "x-control": "checkbox",
+      "default": true
+    },
+    "accent_color": {
+      "type": "string",
+      "title": "图表主色",
+      "description": "报告里图表和强调块用的主色;用取色器选,存下来是十六进制字符串。",
+      "x-control": "color",
+      "default": "#2563eb"
+    },
+    "brand_hex": {
+      "type": "string",
+      "title": "品牌规范色值(直接粘贴)",
+      "description": "刻意只写 format: color —— 它只是文档说明,不会变成取色器,所以这里保持文本输入,方便从品牌手册里直接粘贴色值。",
+      "format": "color",
+      "default": "#0F172A"
+    },
+    "run_mode": {
+      "type": "string",
+      "title": "执行方式",
+      "description": "选「定时跟踪」后,下面两个字段才会出现——它们只在跟踪模式下有意义。",
+      "enum": ["单次调研", "定时跟踪"],
+      "x-control": "segmented",
+      "default": "单次调研"
+    },
+    "track_window": {
+      "type": "array",
+      "title": "每日跟踪时段",
+      "description": "只在定时跟踪时出现:每天在这个时间段内抓取并比对变化。",
+      "items": { "type": "integer", "minimum": 0, "maximum": 24 },
+      "minItems": 2,
+      "maxItems": 2,
+      "minimum": 0,
+      "maximum": 24,
+      "x-control": "range",
+      "x-visible-when": { "field": "run_mode", "op": "equals", "value": "定时跟踪" },
+      "default": [8, 22]
+    },
+    "track_sample_percent": {
+      "type": "integer",
+      "title": "每轮抽样比例",
+      "description": "只在定时跟踪时出现:每轮最多重读多少比例的信源,用来控制长期跟踪的成本。",
+      "minimum": 0,
+      "maximum": 100,
+      "multipleOf": 5,
+      "x-control": "slider",
+      "x-slider-marks": [
+        { "value": 0, "label": "0%" },
+        { "value": 100, "label": "100%" }
+      ],
+      "x-visible-when": { "field": "run_mode", "op": "equals", "value": "定时跟踪" },
+      "default": 20
+    },
+    "source_types": {
+      "type": "array",
+      "title": "信源类型",
+      "description": "多选:每选中一类就会去对应的渠道找内容;列表里没有的渠道选「其他」。",
+      "items": {
+        "type": "string",
+        "enum": ["官方发布", "权威媒体", "行业报告", "社交平台", "电商评论", "其他"]
+      },
+      "uniqueItems": true,
+      "minItems": 1,
+      "default": ["官方发布", "权威媒体", "行业报告"]
+    },
+    "source_types_custom": {
+      "type": "string",
+      "title": "信源类型 · 自定义说明",
+      "description": "选了「其他」时填写,例如「车主论坛」「经销商报价单」。",
+      "x-visible-when": { "field": "source_types", "op": "contains", "value": "其他" },
+      "x-multiline": true
+    },
+    "delivery": {
+      "title": "交付载体",
+      "description": "组合选择:先选交付形态,再填它自己的字段;其余形态的字段不会出现。",
+      "oneOf": [
+        {
+          "title": "单文件 HTML 报告",
+          "type": "object",
+          "properties": {
+            "kind": { "type": "string", "const": "html" },
+            "open_after_done": {
+              "type": "boolean",
+              "title": "完成后自动打开",
+              "default": true
+            }
+          },
+          "required": ["kind"]
+        },
+        {
+          "title": "Markdown 报告",
+          "type": "object",
+          "properties": {
+            "kind": { "type": "string", "const": "markdown" },
+            "include_toc": {
+              "type": "boolean",
+              "title": "含目录",
+              "default": true
+            }
+          },
+          "required": ["kind"]
+        },
+        {
+          "title": "在线文档",
+          "type": "object",
+          "properties": {
+            "kind": { "type": "string", "const": "doc" },
+            "doc_title": {
+              "type": "string",
+              "title": "文档标题",
+              "default": "最近新能源车调研"
+            }
+          },
+          "required": ["kind"]
+        }
+      ]
+    },
+    "watchlist": {
+      "type": "array",
+      "title": "重点跟踪对象",
+      "description": "列表:每条一个要重点跟踪的品牌/车型/技术路线,会逐个展开;点开每条可以单独编辑。",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "名称",
+            "default": "比亚迪"
+          },
+          "kind": {
+            "type": "string",
+            "title": "类型",
+            "enum": ["品牌", "车型", "技术路线", "其他"],
+            "default": "品牌"
+          },
+          "kind_custom": {
+            "type": "string",
+            "title": "类型 · 自定义说明",
+            "x-visible-when": { "field": "kind", "op": "equals", "value": "其他" }
+          },
+          "url": {
+            "type": "string",
+            "title": "参考链接(可选)",
+            "default": "https://www.byd.com"
+          }
+        },
+        "required": ["name", "kind"]
+      },
+      "default": [
+        { "name": "比亚迪", "kind": "品牌", "url": "https://www.byd.com" }
+      ]
+    },
+    "labels": {
+      "type": "object",
+      "title": "自定义标签",
+      "description": "键值对:方便把这次调研归档和检索,例如 项目=2026 选型。",
+      "additionalProperties": { "type": "string" },
+      "default": { "项目": "2026 选型", "负责人": "产品组" }
+    }
+  }
+}

@@ -55,6 +55,57 @@ FEATURE_BRIEF_ANSWER = {
     "rollout": {"rollout_percent": 20, "confidence": 0.8, "business_hours": [9, 17], "accent_color": "#6366f1"},
 }
 
+WEB_RESEARCH_SCHEMA = ROOT / "examples" / "web-research-brief.schema.json"
+WEB_RESEARCH_DEFAULTS = ROOT / "examples" / "web-research-brief.defaults.json"
+WEB_RESEARCH_ANSWER = {
+    "topic": "最近三个月发布的新款新能源车",
+    "goal": "给家里换一台新能源车做决策依据。",
+    "publish_age_days": [7, 90],
+    "source_types": ["官方发布", "权威媒体"],
+    "delivery": {"kind": "markdown", "include_toc": True},
+}
+
+# Every control the schemaui gallery can draw, pinned to the one field in
+# web-research-brief.schema.json that must draw it. The whole mapping is
+# compared, so a dropped hint — or a hinted field nobody meant to add — fails
+# here instead of quietly shrinking the reference form.
+GALLERY_CONTROLS = {
+    "/focus_terms": "text",
+    "/goal": "textarea",
+    "/focus_items": "slider",
+    "/fetch_timeout_seconds": "slider",
+    "/relevance_floor": "slider",
+    "/dedup_similarity": "slider",
+    "/depth_level": "slider",
+    "/source_authority": "slider",
+    "/freshness_weight": "slider",
+    "/publish_age_days": "range",
+    "/price_range": "range",
+    "/confidence_band": "range",
+    "/run_mode": "segmented",
+    "/track_window": "range",
+    "/track_sample_percent": "slider",
+    "/report_language": "segmented",
+    "/report_style": "radio",
+    "/urgency": "segmented",
+    "/include_competitor_pricing": "checkbox",
+    "/accent_color": "color",
+}
+
+# The other half of that contract: a hint is opt-in, so these fields must stay
+# on their shape's default control — text input, number box, `select` for the
+# long enum, `switch` for the plain boolean — even though they carry bounds or
+# a `format`.
+SHAPE_DEFAULT_FIELDS = (
+    "/topic",
+    "/expected_words",
+    "/max_sources",
+    "/time_budget_minutes",
+    "/brand_hex",
+    "/market",
+    "/include_charts",
+)
+
 # The launcher matrix every e2e test runs against. Both twins must keep the same
 # contract, so each behavioural test is exercised through both rather than
 # trusting the "same flags, same stdout contract" claim.
@@ -377,6 +428,85 @@ def test_e2e_feature_brief_full_control_showcase(tmp_path: Path):
     finally:
         proc.kill() if proc.poll() is None else None
     assert json.loads(answer.read_text()) == FEATURE_BRIEF_ANSWER
+
+
+@needs_binary
+def test_e2e_web_research_brief_covers_the_control_gallery(tmp_path: Path):
+    """The Chinese research form is the worked reference for the whole gallery.
+
+    Agents copy from it, so its coverage is a contract rather than a detail:
+    every control, the conditional wiring, and the a2ui-ask structures are
+    asserted here instead of being trusted to survive the next edit.
+    """
+    proc = subprocess.Popen(
+        [
+            sys.executable,
+            str(PY_SCRIPT),
+            "--schema",
+            str(WEB_RESEARCH_SCHEMA),
+            "--config",
+            str(WEB_RESEARCH_DEFAULTS),
+            "--title",
+            "联网调研任务确认",
+            "--port",
+            "0",
+            "--no-open",
+        ],
+        cwd=tmp_path,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.DEVNULL,
+        text=True,
+    )
+    try:
+        url = read_until(proc, "SCHEMAUI_URL=").strip().split("=", 1)[1].rstrip("/")
+        with urllib.request.urlopen(f"{url}/api/session", timeout=5) as resp:
+            session = json.loads(resp.read())
+        by_pointer = {node["pointer"]: node for node in collect_nodes(session["ui_ast"]["roots"])}
+
+        def bounds(pointer: str) -> dict:
+            return by_pointer[pointer]["bounds"]
+
+        # every gallery control, and only those fields, carry a hint
+        hinted = {pointer: node["control"] for pointer, node in by_pointer.items() if node.get("control")}
+        assert hinted == GALLERY_CONTROLS
+        for pointer in SHAPE_DEFAULT_FIELDS:
+            assert by_pointer[pointer]["control"] is None, pointer
+        # `select` is the shape default for an enum, so the long market list
+        # must still reach the browser as one
+        assert by_pointer["/market"]["kind"]["enum_values"] is not None
+        # ... and `x-multiline` marks a string multi-line without naming a control
+        assert by_pointer["/background"]["kind"]["multiline"] is True
+
+        # the slider/range variants the gallery separates: a derived step
+        # against a declared one, and bare against labelled against unit marks
+        assert bounds("/relevance_floor")["step"] is None
+        assert bounds("/fetch_timeout_seconds")["step"] == 15.0
+        assert bounds("/price_range")["step"] == 10000.0
+        assert [mark["label"] for mark in bounds("/depth_level")["marks"]] == [None] * 5
+        assert bounds("/source_authority")["marks"][1]["label"] == "均衡"
+        assert bounds("/freshness_weight")["marks"][-1]["label"] == "100%"
+
+        # `x-visible-when`: escape hatches gated by `equals` and by `contains`,
+        # plus the mode-gated group
+        assert by_pointer["/market_custom"]["visible_when"]["value"] == "其他"
+        assert by_pointer["/source_types_custom"]["visible_when"]["op"] == "contains"
+        assert by_pointer["/track_window"]["visible_when"]["field"] == "run_mode"
+        assert by_pointer["/track_sample_percent"]["visible_when"]["field"] == "run_mode"
+        assert by_pointer["/topic"]["visible_when"] is None
+
+        # the a2ui-ask conventions: multi-select and record list are both
+        # arrays, told apart by their item node
+        assert by_pointer["/source_types"]["kind"]["item"]["enum_values"] is not None
+        assert by_pointer["/watchlist"]["kind"]["item"]["type"] == "composite"
+        assert by_pointer["/delivery"]["kind"]["mode"] == "one_of"
+        assert by_pointer["/labels"]["kind"]["type"] == "key_value"
+
+        answer = tmp_path / read_until(proc, "SCHEMAUI_ANSWER=").strip().split("=", 1)[1]
+        drive_session(url, WEB_RESEARCH_ANSWER)
+        assert proc.wait(timeout=15) == 0
+    finally:
+        proc.kill() if proc.poll() is None else None
+    assert json.loads(answer.read_text()) == WEB_RESEARCH_ANSWER
 
 
 @needs_binary

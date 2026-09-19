@@ -68,6 +68,12 @@ cargo, manual): see `install.md` in this repository.
 - **Speak the user's language.** Write every `title` and `description` in the
   language the user is chatting in, and say in the description what the answer
   changes downstream ("drives whether we need rate limiting").
+- **Pick the control, don't settle for text boxes.** A slider for a scale, a
+  two-handle range for a window, a colour picker for a colour, a segmented
+  control for a handful of short options, `x-visible-when` for anything that
+  only matters sometimes. Choosing from the gallery is what makes the form
+  pleasant to fill in — see
+  [Picking the control](#picking-the-control-use-the-gallery).
 - **Always leave an escape hatch, and keep it out of the way.** Your options and
   defaults are guesses, so every select gets an `其他`/`other` option plus a
   sibling `<field>_custom` text input. Gate that input with `x-visible-when` so
@@ -105,6 +111,7 @@ cargo, manual): see `install.md` in this repository.
 | few short options     | `{"type": "string", "enum": [...], "x-control": "segmented"}`             | inline segmented control         |
 | few verbose options   | `{"type": "string", "enum": [...], "x-control": "radio"}`                 | stacked radio group              |
 | yes/no                | `{"type": "boolean"}`                                                     | toggle                           |
+| yes/no, part of a set | `{"type": "boolean", "x-control": "checkbox"}`                            | checkbox                         |
 | single select         | `{"type": "string", "enum": [...]}`                                       | popup selector                   |
 | multi select          | `{"type": "array", "items": {"enum": [...]}, "uniqueItems": true}`        | checkbox list (one per option)   |
 | select + escape hatch | `enum: [..., "其他"]` plus a sibling `"<field>_custom"` carrying `x-visible-when` | selector, then a text field once 「其他」 is picked |
@@ -119,20 +126,40 @@ applies conditionally (`has_changes` → `change_notes`, `cache.enabled` →
 `cache.ttl_seconds`). `x-multiline` is for anything you would expect the user to
 write more than one line into — a goal, a description, a change log.
 
-`x-control` is a *request*, and bounds stay validation keywords: a slider needs
-`minimum`/`maximum` on the value, and a hint the engine cannot honour (or does
-not know) falls back to that shape's default control rather than failing. Ask
-for a control when the default is genuinely worse — a percentage the user
-drags, a two-end window, a colour — not for every number on the form.
+## Picking the control: use the gallery
 
-Slider/range/colour/segmented/radio hints need a newer engine than the two text
-hints alone. `schemaui` ≥ 0.14 / `schemaui-cli` ≥ 0.8 draws them; an older
+A form of plain text boxes makes the user do the translating. Reach for the
+control that matches the value — the gallery is the catalogue, and using it is
+what turns a wall of inputs into something people actually want to fill in:
+
+- a percentage, a count on a scale, a weight → `"slider"` (add
+  `"x-slider-marks"` when the stops have names);
+- a window with two ends (hours, price, days) → `"range"` — an array of two with
+  `minItems`/`maxItems: 2` and `minimum`/`maximum` on the array itself;
+- a colour → `"color"`; a 2-4 option enum → `"segmented"`; options with longer
+  labels → `"radio"`; a long list → leave it a `select`;
+- a boolean that reads as "one of the things I'm choosing" → `"checkbox"`; one
+  that flips a mode right now → leave it a `switch`;
+- a paragraph-length answer → `x-multiline` (or `"textarea"`), never a one-line
+  box;
+- anything that only matters sometimes → `x-visible-when`, on the same object.
+
+Don't make every field a special case either: a hint earns its place when it
+removes typing or removes a wrong answer, not for decoration.
+
+`x-control` is a *request*, and bounds stay validation keywords: a slider needs
+`minimum`/`maximum` on the value, and a hint the engine cannot honour falls back
+to that shape's default control rather than failing. Slider/range/colour/
+segmented/radio hints need `schemaui` ≥ 0.14 / `schemaui-cli` ≥ 0.8; an older
 engine ignores unknown `x-` keywords, so the form still runs — it just shows
 plain inputs everywhere.
 
-Read `examples/feature-brief.schema.json` (English, every control type) and
-`examples/invoice-reimbursement.schema.json` (Chinese, escape hatches on every
-select) before generating your own. The engine's own gallery,
+Read these before writing your own:
+`examples/web-research-brief.schema.json` (中文 — the worked reference: every
+control in the gallery, escape hatches, conditional fields, `oneOf`, a record
+list, a key/value map), `examples/feature-brief.schema.json` (English, every
+control type) and `examples/invoice-reimbursement.schema.json` (中文, escape
+hatches on every select). The engine's own gallery,
 [`schemaui/examples/controls-gallery.schema.json`](https://github.com/YuniqueUnic/schemaui/blob/main/examples/controls-gallery.schema.json),
 shows every hint value side by side.
 
@@ -241,20 +268,21 @@ something similar. Reuse a prior answer as defaults via `--config`.
 
 ## Examples
 
-Five runnable forms live in `examples/` (each with a `.defaults.json` carrying
+Six runnable forms live in `examples/` (each with a `.defaults.json` carrying
 the recommended answers):
 
-| Example                             | Scenario                                                                             |
-| ----------------------------------- | ------------------------------------------------------------------------------------ |
-| `env-schema.json`                   | minimal 4-field deploy form — first smoke test                                       |
-| `feature-brief.schema.json`         | 12-question requirements brief, every control type + both hints (EN)                 |
-| `invoice-reimbursement.schema.json` | office: invoice & expense reimbursement (中文, escape hatches)                       |
-| `ecommerce-main-image.schema.json`  | design: e-commerce hero image specs — sizes, fonts, colors, oneOf backgrounds (中文) |
-| `seo-diagnosis.schema.json`         | SEO triage: site, issues, keywords, competitors (中文)                               |
+| Example                             | Scenario                                                                                       |
+| ----------------------------------- | ---------------------------------------------------------------------------------------------- |
+| `env-schema.json`                   | minimal 4-field deploy form — first smoke test                                                 |
+| `web-research-brief.schema.json`    | research: scope a web-research task — **every control in the gallery** (中文)                  |
+| `feature-brief.schema.json`         | 12-question requirements brief, every control type + both hints (EN)                           |
+| `invoice-reimbursement.schema.json` | office: invoice & expense reimbursement (中文, escape hatches)                                 |
+| `ecommerce-main-image.schema.json`  | design: e-commerce hero image specs — sizes, fonts, colors, oneOf backgrounds (中文)           |
+| `seo-diagnosis.schema.json`         | SEO triage: site, issues, keywords, competitors (中文)                                         |
 
 ```bash
 python3 scripts/ask.py \
-  --schema examples/invoice-reimbursement.schema.json \
-  --config examples/invoice-reimbursement.defaults.json \
-  --title "发票报销处理"
+  --schema examples/web-research-brief.schema.json \
+  --config examples/web-research-brief.defaults.json \
+  --title "联网调研任务确认"
 ```
