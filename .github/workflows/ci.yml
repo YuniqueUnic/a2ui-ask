@@ -6,6 +6,22 @@ on:
   pull_request:
 
 jobs:
+  # This repo's formatter is `deno fmt`, which owns the JSON, the Markdown and
+  # these workflow files themselves. Nothing enforced it, so the tree drifted
+  # once already; a cheap gate keeps that from happening again.
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      # setup-deno publishes no floating major tag (`@v2` does not resolve),
+      # so pin the release.
+      - uses: denoland/setup-deno@v2.0.5
+        with:
+          deno-version: v2.x
+
+      - run: deno fmt --check
+
   test:
     strategy:
       fail-fast: false
@@ -13,7 +29,7 @@ jobs:
         os: [ubuntu-latest, macos-latest, windows-latest]
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Install cargo-binstall
         uses: taiki-e/install-action@v2
@@ -24,7 +40,7 @@ jobs:
         run: cargo binstall schemaui-cli --no-confirm
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v5
+        uses: astral-sh/setup-uv@v7
 
       - name: Run tests (pytest via uv; pwsh e2e runs where available)
         shell: bash
