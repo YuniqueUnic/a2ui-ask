@@ -31,8 +31,20 @@ pwsh scripts/install.ps1       # Windows / PowerShell 7+
 ```
 
 Both default to a prebuilt-binary download (no toolchain needed) and support
-`--dry-run` / `-DryRun` to preview. Full channel list (brew, scoop, winget,
-cargo, manual): see `install.md` in this repository.
+`--dry-run` / `-DryRun` to preview. They fetch from GitHub first and fall back
+to the [Gitee mirror](https://gitee.com/Credhat/schemaui) — same tags, same
+asset names — which is what makes them work from mainland China. If a user
+reports a stalled or failed install, re-run with the mirror pinned rather than
+retrying GitHub:
+
+```bash
+bash scripts/install.sh --source gitee
+pwsh scripts/install.ps1 -Source gitee
+```
+
+The brew / scoop / winget manifests still hardcode GitHub download URLs, so on a
+blocked network prefer `--source gitee` or `cargo install schemaui-cli`. Full
+channel list: see `install.md` in this repository.
 
 ## Non-negotiables
 
@@ -227,7 +239,7 @@ shows every hint value side by side.
 | Code | Meaning              | Your action                                                                                              |
 | ---- | -------------------- | -------------------------------------------------------------------------------------------------------- |
 | 0    | answer written       | read the file, continue                                                                                  |
-| 3    | schemaui not found   | offer to run `scripts/install.sh` / `install.ps1`, then retry; else fall back to plain text              |
+| 3    | schemaui not found   | offer to run `scripts/install.sh` / `install.ps1` and retry; `--source gitee` if github.com is blocked   |
 | 4    | timeout (default 5m) | the form showed a countdown and closed itself; nothing was saved. Fall back to plain text, tell the user |
 | 5    | cancelled / failed   | fall back to plain text, tell the user                                                                   |
 | 6    | bad schema/config    | fix the schema or fall back, tell the user                                                               |

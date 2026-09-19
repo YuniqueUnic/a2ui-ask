@@ -59,8 +59,18 @@ bash scripts/install.sh      # macOS / Linux / FreeBSD
 pwsh scripts/install.ps1     # Windows / PowerShell 7+
 ```
 
+脚本优先从 GitHub 下载，**在国内访问不了 github.com 时自动回退到
+[Gitee 镜像](https://gitee.com/Credhat/schemaui)**（tag 与文件名跟 GitHub 保持一
+致）。也可以用 `--source github|gitee`（sh）/ `-Source github|gitee`（ps1）强制
+指定来源：
+
+```bash
+bash scripts/install.sh --source gitee
+```
+
 其它渠道（brew、scoop、winget、cargo、手动下载）见
-[`install.md`](./install.md)。
+[`install.md`](./install.md)。注意 brew / scoop / winget 的清单里写死了 GitHub
+下载地址，国内访问不了时请改用上面的 `--source gitee`，或 `cargo install`。
 
 然后三选一安装 skill:
 

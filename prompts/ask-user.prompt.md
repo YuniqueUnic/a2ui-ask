@@ -10,8 +10,11 @@ When you need user input:
    group, checkbox, `x-visible-when` for anything conditional. The worked
    reference covering every control is
    `examples/web-research-brief.schema.json`; `SKILL.md` says when each fits.
-3. Only if schemaui fails or is absent, use plain text — and tell the user you
-   fell back.
+3. If schemaui is absent, install it before giving up — `scripts/install.sh` /
+   `install.ps1` run unattended and need no toolchain, and `--source gitee` /
+   `-Source gitee` pulls from the Gitee mirror when github.com is unreachable
+   (the common case in mainland China). Only if that fails too, use plain text —
+   and tell the user you fell back.
 4. Batch all questions into one round. Never interrogate serially.
 5. If you previously collected answers via schemaui, check `.schemaui/answers/`
    before asking again — the user may have already answered this. Reuse prior

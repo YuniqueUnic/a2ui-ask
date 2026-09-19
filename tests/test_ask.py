@@ -777,6 +777,48 @@ def test_install_sh_dry_run_detects_platform():
 
 
 @no_windows
+def test_install_sh_source_selection():
+    """--source pins one host; auto is the fallback chain, GitHub first."""
+    urls: dict[str, list[str]] = {}
+    for source in ("github", "gitee", "auto"):
+        result = subprocess.run(
+            ["bash", str(INSTALL_SH), "--dry-run", "--source", source],
+            env={**os.environ, "PATH": "/usr/bin:/bin"},
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            timeout=90,
+        )
+        assert result.returncode == 0, result.stderr
+        urls[source] = [
+            line.split("url:", 1)[1].strip()
+            for line in result.stdout.splitlines()
+            if "url:" in line
+        ]
+
+    assert urls["github"] and all("github.com" in url for url in urls["github"])
+    assert urls["gitee"] and all("gitee.com" in url for url in urls["gitee"])
+    # auto exists to survive github.com being unreachable, so order is the contract
+    assert len(urls["auto"]) == 2
+    assert "github.com" in urls["auto"][0]
+    assert "gitee.com" in urls["auto"][1]
+
+
+@no_windows
+def test_install_sh_rejects_an_unknown_source():
+    result = subprocess.run(
+        ["bash", str(INSTALL_SH), "--dry-run", "--source", "bitbucket"],
+        env={**os.environ, "PATH": "/usr/bin:/bin"},
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        timeout=60,
+    )
+    assert result.returncode != 0
+    assert "unknown source" in result.stderr
+
+
+@no_windows
 def test_install_sh_reports_existing_binary():
     if not BINARY:
         pytest.skip("schemaui binary not available")
@@ -811,3 +853,20 @@ def test_install_ps1_dry_run_and_platform_guard():
     else:
         assert result.returncode != 0
         assert "install.sh" in result.stderr
+
+
+@needs_pwsh
+@pytest.mark.skipif(sys.platform != "win32", reason="the Gitee fallback is Windows-only")
+def test_install_ps1_source_selection():
+    """-Source gitee keeps the installer off github.com entirely."""
+    script = f'$env:PATH = "/usr/bin:/bin"; & "{INSTALL_PS1}" -DryRun -Source gitee'
+    result = subprocess.run(
+        [PWSH, "-NoProfile", "-Command", script],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        timeout=90,
+    )
+    assert result.returncode == 0, result.stderr
+    assert "gitee.com" in result.stdout
+    assert "github.com" not in result.stdout

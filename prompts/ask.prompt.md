@@ -153,6 +153,12 @@ Switch to plain-text questioning AND tell the user you fell back when any of
 these happen: schemaui binary not found, schema validation fails, non-zero exit
 / user cancelled, timeout.
 
+A missing binary earns one attempt first: `scripts/install.sh` / `install.ps1`
+run unattended and need no toolchain. Add `--source gitee` / `-Source gitee`
+when github.com is unreachable — the common case in mainland China, where the
+Gitee mirror is the only working source. Fall back only if the install itself
+fails.
+
 ## Sensitive input
 
 For secrets (tokens, passwords) use `--host 127.0.0.1` instead, and tell remote

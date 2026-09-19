@@ -64,6 +64,15 @@ bash scripts/install.sh      # macOS / Linux / FreeBSD
 pwsh scripts/install.ps1     # Windows / PowerShell 7+
 ```
 
+It downloads from GitHub and falls back to the
+[Gitee mirror](https://gitee.com/Credhat/schemaui) when github.com is
+unreachable — the usual case from mainland China. Pin one side with
+`--source github|gitee` (sh) or `-Source github|gitee` (ps1):
+
+```bash
+bash scripts/install.sh --source gitee
+```
+
 Other channels (brew, scoop, winget, cargo, manual download): see
 [`install.md`](./install.md).
 

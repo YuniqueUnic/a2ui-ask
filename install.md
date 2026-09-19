@@ -27,9 +27,28 @@ pwsh scripts/install.ps1 -DryRun
 ```
 
 Options: `--method auto|download|brew|cargo` (sh) /
-`-Method auto|download|scoop|cargo` (ps1), `--dir DIR` / `-Dir DIR` to change
-the install location (default `~/.local/bin` /
-`%LOCALAPPDATA%\Programs\schemaui\bin`).
+`-Method auto|download|scoop|cargo` (ps1), `--source auto|github|gitee` /
+`-Source auto|github|gitee`, `--dir DIR` / `-Dir DIR` to change the install
+location (default `~/.local/bin` / `%LOCALAPPDATA%\Programs\schemaui\bin`).
+
+### Where the binary comes from
+
+GitHub first, then the [Gitee mirror](https://gitee.com/Credhat/schemaui). The
+mirror carries the same tags and the same release asset names, and the schemaui
+repo's `cd.yml` mirrors every new release into it, so the two stay equivalent.
+That fallback is what makes the installer usable from mainland China, where
+github.com is unreliable:
+
+```bash
+bash scripts/install.sh                  # GitHub, then the mirror (default)
+bash scripts/install.sh --source gitee   # skip GitHub entirely
+bash scripts/install.sh --source github  # no mirror
+pwsh scripts/install.ps1 -Source gitee
+```
+
+Only the prebuilt-download path has a mirror. The brew, scoop and winget
+manifests hardcode GitHub download URLs of their own, so on a blocked network
+prefer `--source gitee` or `cargo install schemaui-cli`.
 
 ## Package managers
 
@@ -44,6 +63,9 @@ scoop install https://raw.githubusercontent.com/YuniqueUnic/schemaui/main/packag
 winget install --manifest <clone>/packaging/winget
 ```
 
+All three resolve their download URLs against github.com, so they need it to be
+reachable. When it is not, use the auto-installer with `--source gitee` instead.
+
 ## Cargo
 
 ```bash
@@ -55,7 +77,15 @@ cargo install schemaui-cli    # build from source
 
 Grab the archive for your platform from the
 [latest schemaui-cli release](https://github.com/YuniqueUnic/schemaui/releases)
-(assets are named `schemaui-<target-triple>.tar.gz`, Windows also `.zip`):
+(assets are named `schemaui-<target-triple>.tar.gz`, Windows also `.zip`). The
+same file is on the mirror at
+[gitee.com/Credhat/schemaui](https://gitee.com/Credhat/schemaui/releases) under
+the same tag and name — swap the host and keep the path:
+
+```
+https://github.com/YuniqueUnic/schemaui/releases/download/<tag>/<asset>
+https://gitee.com/Credhat/schemaui/releases/download/<tag>/<asset>
+```
 
 | Platform            | Asset                                                    |
 | ------------------- | -------------------------------------------------------- |
@@ -81,6 +111,9 @@ schemaui web --schema examples/env-schema.json --port 8787 -o answer.json
 
 - `scripts/ask.py` (and the sh/ps1 twins) exit with code **3** when the binary
   is missing. Offer to run the auto-installer, then retry the form.
+- If an install stalls or fails, do not just retry it: re-run with the mirror
+  pinned (`--source gitee` / `-Source gitee`). An unreachable github.com is the
+  likeliest cause and the mirror is the fix.
 - If the binary lives somewhere unusual, point the scripts at it with
   `SCHEMAUI_BIN=/path/to/schemaui`.
 - The scripts only need the `web` subcommand, but the `x-visible-when` and
