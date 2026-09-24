@@ -1,0 +1,8 @@
+{
+  "topology": "monolith",
+  "rollout": "rolling",
+  "data_layer": "shared",
+  "network": {
+    "exposure": "公网负载均衡"
+  }
+}

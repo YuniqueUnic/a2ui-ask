@@ -16,10 +16,26 @@ you and the agent can re-read later.
 Every control the engine can draw — sliders, range sliders with marks, segmented
 controls, radio groups, switches, a custom color picker, conditional fields —
 driven entirely by schema hints, and the skill tells the agent to reach for
-them. The full set lives in
-[`schemaui`'s controls gallery](https://github.com/YuniqueUnic/schemaui/blob/main/examples/controls-gallery.schema.json);
+them. Figures ride the same hints: a question or an option can carry a
+**Mermaid diagram, an inline SVG, or sanitised Markdown** (`x-content` /
+`x-options`), and an answer can *be* a diagram via the live-preview
+`x-control: "mermaid"` editor. The full set lives in
+[`schemaui`'s controls gallery](https://github.com/YuniqueUnic/schemaui/blob/main/examples/controls-gallery.schema.json)
+and [rich-content gallery](https://github.com/YuniqueUnic/schemaui/blob/main/examples/rich-content.schema.json);
 [`examples/web-research-brief.schema.json`](./examples/web-research-brief.schema.json)
 is the worked example that uses every one of them (中文).
+
+<table>
+  <tr>
+    <td><img src="./docs/controls-gallery.png" alt="The control gallery: sliders, ranges, segmented, radio, color picker and more" /></td>
+  </tr>
+  <tr>
+    <td><img src="./docs/rich-options.png" alt="Figure-bearing options: each deployment topology option ships its own Mermaid diagram" /></td>
+  </tr>
+  <tr>
+    <td><img src="./docs/mermaid-editor.png" alt="The mermaid editor: source on the left, live preview on the right" /></td>
+  </tr>
+</table>
 
 ## Why
 
@@ -138,6 +154,16 @@ without Python: `bash scripts/ask.sh --schema …`.
   ranges, colour pickers, segmented controls, radio groups, checkboxes, and
   conditional fields, alongside text, number, single/multi select, oneOf
   compositions, nested objects, record lists, and key/value maps.
+- **Show, don't tell** — when options differ in *shape* (topologies, rollout
+  strategies, data models), the agent attaches a diagram to each option and
+  lets you pick by recognising the picture; node-level `x-content` explains a
+  field with a figure or prose; a `mermaid` control makes the answer itself an
+  editable, live-previewed diagram.
+- **Interview discipline built in** — for open-ended designs, the skill defers
+  to whatever grilling skill you already have, and falls back to the bundled
+  [`skills/grill-with-docs`](./skills/grill-with-docs/SKILL.md): one question
+  at a time, every question with a recommended answer, every question grounded
+  in the project's docs.
 
 ## Examples
 
@@ -152,6 +178,7 @@ the matching `.defaults.json`):
 | [`invoice-reimbursement.schema.json`](./examples/invoice-reimbursement.schema.json) | office: invoice & expense reimbursement (中文)                            |
 | [`ecommerce-main-image.schema.json`](./examples/ecommerce-main-image.schema.json)   | design: e-commerce hero images — sizes, fonts, colors, backgrounds (中文) |
 | [`seo-diagnosis.schema.json`](./examples/seo-diagnosis.schema.json)                 | SEO triage: site, issues, keywords, competitors (中文)                    |
+| [`deployment-architecture.schema.json`](./examples/deployment-architecture.schema.json) | architecture choice: every option carries a diagram (中文 — the figures reference) |
 
 ## Script contract
 
