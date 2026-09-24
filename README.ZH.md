@@ -13,10 +13,26 @@
 
 引擎能画的所有控件——滑块、带刻度的范围滑块、分段控件、单选组、开关、
 自定义取色器、条件字段——全部由 schema 提示驱动，skill 也会明确要求 agent 主动
-用起来。完整清单见
-[`schemaui` 控件画廊](https://github.com/YuniqueUnic/schemaui/blob/main/examples/controls-gallery.schema.json)；
+用起来。图形走同一套提示：问题和选项都可以带 **Mermaid 图、内联 SVG 或
+Markdown 说明**（`x-content` / `x-options`），答案本身也可以是一张可编辑的
+实时预览图（`x-control: "mermaid"`）。完整清单见
+[`schemaui` 控件画廊](https://github.com/YuniqueUnic/schemaui/blob/main/examples/controls-gallery.schema.json)
+与
+[富内容画廊](https://github.com/YuniqueUnic/schemaui/blob/main/examples/rich-content.schema.json)；
 [`examples/web-research-brief.schema.json`](./examples/web-research-brief.schema.json)
 是把这些控件全部用上的一份中文范例。
+
+<table>
+  <tr>
+    <td><img src="./docs/controls-gallery.png" alt="控件画廊：滑块、范围、分段、单选、取色器等全部控件" /></td>
+  </tr>
+  <tr>
+    <td><img src="./docs/rich-options.png" alt="选项配图：每个部署拓扑选项自带一张 Mermaid 图" /></td>
+  </tr>
+  <tr>
+    <td><img src="./docs/mermaid-editor.png" alt="Mermaid 编辑器：左侧源码、右侧实时预览" /></td>
+  </tr>
+</table>
 
 ## 为什么需要它
 
@@ -130,6 +146,13 @@ Windows / PowerShell 7+:`pwsh scripts/ask.ps1 -Schema … -Title …`。没有 P
 - **给每个答案配对的控件** —— 滑块、带刻度的滑块、双柄范围、取色器、分段控件、
   单选组、复选框、条件字段，外加文本、数值、单选/多选、oneOf 组合、嵌套对
   象、记录列表、键值映射。
+- **能看图就别读字** —— 选项差在「形状」上时（拓扑、发布策略、数据模型），
+  agent 给每个选项配一张图，你认图选择;节点级 `x-content` 用图或一段富文本
+  解释字段背景;`mermaid` 控件让答案本身就是一张可编辑、实时预览的图。
+- **访谈纪律内置** —— 开放式设计需要深度访谈时，skill 优先使用你已安装的
+  grilling 类 skill，都没有时回退到内置的
+  [`skills/grill-with-docs`](./skills/grill-with-docs/SKILL.md)：一次一问、
+  每问带推荐答案、每个问题都以项目文档为依据。
 
 ## 示例
 
@@ -144,6 +167,7 @@ Windows / PowerShell 7+:`pwsh scripts/ask.ps1 -Schema … -Title …`。没有 P
 | [`invoice-reimbursement.schema.json`](./examples/invoice-reimbursement.schema.json) | 办公：发票报销处理 (中文，每个选择带「其他」逃生口) |
 | [`ecommerce-main-image.schema.json`](./examples/ecommerce-main-image.schema.json)   | 设计：电商主图 —— 尺寸、字号、颜色、渐变背景 (中文) |
 | [`seo-diagnosis.schema.json`](./examples/seo-diagnosis.schema.json)                 | SEO 排查：站点、问题、关键词、竞品 (中文)           |
+| [`deployment-architecture.schema.json`](./examples/deployment-architecture.schema.json) | 架构选型：每个选项自带一张图 (中文，图形界面参考例) |
 
 ## 脚本契约
 

@@ -102,7 +102,11 @@
       "maximum": 4,
       "x-control": "slider",
       "x-slider-marks": [0, 1, 2, 3, 4],
-      "default": 2
+      "default": 2,
+      "x-content": {
+        "type": "mermaid",
+        "source": "flowchart LR\n  q[检索] --> f[筛选] --> x[提炼] --> w[成文]\n  f -. 浅层到此 .-> w\n  x -. 深层继续 .-> v[交叉验证] --> w"
+      }
     },
     "source_authority": {
       "type": "integer",
@@ -428,6 +432,13 @@
       "description": "键值对:方便把这次调研归档和检索,例如 项目=2026 选型。",
       "additionalProperties": { "type": "string" },
       "default": { "项目": "2026 选型", "负责人": "产品组" }
+    },
+    "report_flow": {
+      "type": "string",
+      "title": "调研流程图（可编辑）",
+      "description": "x-control: mermaid —— 字段的值就是图的源码,右侧实时预览。这里预填了本次调研的执行流程;如果你对步骤或顺序有意见,直接改图,改的就是执行约定。",
+      "default": "flowchart TD\n  q[检索 query 集] --> s[相关性打分]\n  s --> dedup[去重合并]\n  dedup --> read[精读 top 来源]\n  read --> draft[初稿]\n  draft --> cite[逐条对引用] --> final[终稿]",
+      "x-control": "mermaid"
     }
   }
 }

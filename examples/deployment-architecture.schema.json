@@ -1,0 +1,188 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "部署架构选择",
+  "description": "示例：选项差在「形状」上时，让每个选项自带一张图，用户看图选型而不是读文字。节点上的 x-content 先给出全局结构，选项的 x-options 图回答“这个选项长什么样”。",
+  "type": "object",
+  "required": [
+    "topology",
+    "rollout",
+    "data_layer"
+  ],
+  "properties": {
+    "topology": {
+      "type": "string",
+      "title": "服务拓扑",
+      "description": "radio 而不是 segmented：每个选项的图需要一整行的空间。图回答“长什么样”，description 回答“代价是什么”。",
+      "enum": [
+        "monolith",
+        "microservices",
+        "serverless"
+      ],
+      "default": "monolith",
+      "x-control": "radio",
+      "x-options": [
+        {
+          "label": "单体",
+          "description": "一个进程包办一切：部署与调试最简单，团队小时迭代最快。",
+          "content": {
+            "type": "mermaid",
+            "source": "flowchart TD\n  ui[UI] --> app[App]\n  app --> db[(DB)]"
+          }
+        },
+        {
+          "label": "微服务",
+          "description": "按业务边界拆分，独立部署与扩容；换来的是网关、网络调用与运维成本。",
+          "content": {
+            "type": "mermaid",
+            "source": "flowchart TD\n  gw[gateway] --> a & b\n  a --> dba[(db)]\n  b --> dbb[(db)]"
+          }
+        },
+        {
+          "label": "Serverless",
+          "description": "函数 + 托管队列，按调用计费、自动扩缩；冷启动与厂商绑定是代价。",
+          "content": {
+            "type": "mermaid",
+            "source": "flowchart LR\n  fn1(lambda) --> queue --> fn2(lambda)"
+          }
+        }
+      ]
+    },
+    "rollout": {
+      "type": "string",
+      "title": "发布策略",
+      "description": "同一套服务，三种把新版本送到用户手里的形状。金丝雀需要流量探测与回滚自动化，团队小时不建议首选。",
+      "enum": [
+        "rolling",
+        "blue-green",
+        "canary"
+      ],
+      "default": "rolling",
+      "x-control": "radio",
+      "x-options": [
+        {
+          "label": "滚动发布",
+          "description": "实例逐批替换，简单且资源占用最低。",
+          "content": {
+            "type": "mermaid",
+            "source": "flowchart LR\n  v1[v1 v1 v1] --> v2[v1 v2 v2] --> v3[v2 v2 v2]"
+          }
+        },
+        {
+          "label": "蓝绿发布",
+          "description": "两套环境整组切换，回滚一瞬间；要付双倍资源的钱。",
+          "content": {
+            "type": "mermaid",
+            "source": "flowchart LR\n  user(user) --> gw{switch}\n  gw -->|now| blue[blue v1]\n  gw -.->|after switch| green[green v2]"
+          }
+        },
+        {
+          "label": "金丝雀发布",
+          "description": "一小撮真实流量先试新版本，指标正常再放量。",
+          "content": {
+            "type": "mermaid",
+            "source": "flowchart LR\n  user(user) --> lb{按比例}\n  lb -->|95%| stable[v1 稳定版]\n  lb -->|5%| canary[v2 金丝雀]"
+          }
+        }
+      ]
+    },
+    "data_layer": {
+      "type": "string",
+      "title": "数据层",
+      "description": "select 同样能带图：下拉里每个选项是一张小图，选中后大图留在控件下方。前两个选项各带图，转义选项「其他」不带——它没有形状可画。",
+      "enum": [
+        "shared",
+        "dedicated",
+        "其他"
+      ],
+      "default": "shared",
+      "x-options": [
+        {
+          "label": "共享数据库",
+          "description": "所有服务读写同一个库：事务简单，边界容易糊掉。",
+          "content": {
+            "type": "mermaid",
+            "source": "flowchart LR\n  s1[服务 A] & s2[服务 B] --> db[(共享 DB)]"
+          }
+        },
+        {
+          "label": "每服务独享",
+          "description": "库随服务私有，边界清晰；跨服务查询要走 API。",
+          "content": {
+            "type": "mermaid",
+            "source": "flowchart LR\n  s1[服务 A] --> dba[(A 库)]\n  s2[服务 B] --> dbb[(B 库)]"
+          }
+        },
+        {
+          "label": "其他"
+        }
+      ]
+    },
+    "data_layer_custom": {
+      "type": "string",
+      "title": "数据层 · 自定义说明",
+      "description": "选了「其他」时填写：你的数据层长什么样、为什么前两种都不合适。",
+      "x-multiline": true,
+      "x-visible-when": {
+        "field": "data_layer",
+        "op": "equals",
+        "value": "其他"
+      }
+    },
+    "service_flow": {
+      "type": "string",
+      "title": "调用链图（可编辑）",
+      "description": "x-control: mermaid —— 字段的值就是图的源码，右侧实时预览。这里预填了按你拓扑推演的调用链；改图就是改答案，适合需要用户确认或修正的流程。",
+      "default": "flowchart TD\n  client(client) --> gw[api 网关]\n  gw --> svc[业务服务]\n  svc --> db[(数据库)]\n  svc --> cache[(缓存)]",
+      "x-control": "mermaid"
+    },
+    "network": {
+      "type": "object",
+      "title": "网络边界",
+      "description": "对象节点也能挂 x-content：这张图解释的是下面两个字段共同描述的边界，而不是哪一个字段。",
+      "x-content": {
+        "type": "mermaid",
+        "source": "flowchart LR\n  net[私有子网] --- svc[服务实例]\n  svc --- db[(数据库)]\n  lb[公网负载均衡] --- net"
+      },
+      "properties": {
+        "exposure": {
+          "type": "string",
+          "title": "入口暴露",
+          "description": "服务如何被公网访问。",
+          "enum": [
+            "公网负载均衡",
+            "仅内网 + 跳板",
+            "其他"
+          ],
+          "default": "公网负载均衡",
+          "x-options": [
+            {
+              "label": "公网负载均衡"
+            },
+            {
+              "label": "仅内网 + 跳板"
+            },
+            {
+              "label": "其他"
+            }
+          ]
+        },
+        "exposure_custom": {
+          "type": "string",
+          "title": "入口暴露 · 自定义说明",
+          "description": "选了「其他」时填写。",
+          "x-visible-when": {
+            "field": "exposure",
+            "op": "equals",
+            "value": "其他"
+          }
+        }
+      }
+    },
+    "notes": {
+      "type": "string",
+      "title": "补充说明",
+      "description": "任何图都没表达出来的约束（合规、既有系统、团队技能）写在这里。",
+      "x-multiline": true
+    }
+  }
+}
