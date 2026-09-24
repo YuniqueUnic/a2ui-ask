@@ -306,6 +306,36 @@ architecture choice whose options differ in shape is exactly what they're for.
 
 Never hard-fail the task because a question could not be asked.
 
+## Theming: make the form match the project
+
+The web UI is a layer of design tokens, and a plain stylesheet overrides them —
+no build step, no `!important`. Pass one with the ask script's `--theme PATH`
+(or `--web-theme PATH` on the raw CLI); the engine serves it at
+`/api/v1/theme.css`, layered over its own stylesheet, and unsupported builds are
+probed and skipped with a note rather than failing the ask.
+
+The tokens worth overriding (Tailwind v4 `@theme` block in schemaui's
+`web/ui/src/styles/globals.css`):
+`--color-primary`/`--color-primary-foreground`, `--color-background`,
+`--color-muted`, `--color-ring`, `--color-destructive`, `--color-border`, the
+`--color-chart-*` set for report charts, and the `--radius-*` scale. Cover
+`.dark { … }` too, or dark mode keeps the default accent. schemaui ships a
+worked example to copy:
+[`examples/themes/midnight.css`](https://github.com/YuniqueUnic/schemaui/blob/main/examples/themes/midnight.css).
+
+To match an external design system, translate its variables onto schemaui's
+token names inside the stylesheet and comment each mapping next to its override
+(e.g. a design system's `--xx-accent` → `--color-primary`). Generate the file,
+pass `--theme`, and say in chat that the form will pick up the project's look.
+
+Fully custom frontends are a bigger lever and rarely what was asked: the engine
+speaks a plain REST contract (`GET /api/v1/session`,
+`POST /api/v1/save|exit|validate|preview|render`) and can host any directory
+containing an `index.html` via `--frontend DIR` — schemaui's
+[`examples/frontend/`](https://github.com/YuniqueUnic/schemaui/blob/main/examples/frontend/README.md)
+is the minimal scaffold. Reach for that only when CSS genuinely cannot express
+the request.
+
 ## Raw CLI (when the scripts are unavailable)
 
 ```bash
