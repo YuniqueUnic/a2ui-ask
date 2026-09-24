@@ -171,14 +171,16 @@ something similar. Reuse a prior answer as defaults via `--config`.
 
 ## Show, don't tell (figures)
 
-- Options that differ in *shape* (topologies, rollouts, data models) get a
-  diagram each: `"x-options": [{"label": …, "description": …, "content":
-  {"type": "mermaid", "source": "flowchart …"}}, …]` — aligned with `enum` by
-  index; use `radio`/`select` (segmented cannot show figures).
+- Options that differ in _shape_ (topologies, rollouts, data models) get a
+  diagram each:
+  `"x-options": [{"label": …, "description": …, "content":
+  {"type": "mermaid", "source": "flowchart …"}}, …]`
+  — aligned with `enum` by index; use `radio`/`select` (segmented cannot show
+  figures).
 - A question that needs a picture to make sense carries
   `"x-content": {"type": "mermaid"|"svg"|"markdown", "source": …}` — rendered
   above the control.
-- Only when the answer *is* a diagram: `"x-control": "mermaid"` edits the
-  source with a live preview. A figure explains; it is never the value.
-- Reference: `examples/deployment-architecture.schema.json` (every option with
-  a diagram) and `schemaui ≥ 0.16` for the figure surfaces.
+- Only when the answer _is_ a diagram: `"x-control": "mermaid"` edits the source
+  with a live preview. A figure explains; it is never the value.
+- Reference: `examples/deployment-architecture.schema.json` (every option with a
+  diagram) and `schemaui ≥ 0.16` for the figure surfaces.

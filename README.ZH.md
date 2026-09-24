@@ -13,8 +13,8 @@
 
 引擎能画的所有控件——滑块、带刻度的范围滑块、分段控件、单选组、开关、
 自定义取色器、条件字段——全部由 schema 提示驱动，skill 也会明确要求 agent 主动
-用起来。图形走同一套提示：问题和选项都可以带 **Mermaid 图、内联 SVG 或
-Markdown 说明**（`x-content` / `x-options`），答案本身也可以是一张可编辑的
+用起来。图形走同一套提示：问题和选项都可以带 **Mermaid 图、内联 SVG 或 Markdown
+说明**（`x-content` / `x-options`），答案本身也可以是一张可编辑的
 实时预览图（`x-control: "mermaid"`）。完整清单见
 [`schemaui` 控件画廊](https://github.com/YuniqueUnic/schemaui/blob/main/examples/controls-gallery.schema.json)
 与
@@ -146,8 +146,8 @@ Windows / PowerShell 7+:`pwsh scripts/ask.ps1 -Schema … -Title …`。没有 P
 - **给每个答案配对的控件** —— 滑块、带刻度的滑块、双柄范围、取色器、分段控件、
   单选组、复选框、条件字段，外加文本、数值、单选/多选、oneOf 组合、嵌套对
   象、记录列表、键值映射。
-- **能看图就别读字** —— 选项差在「形状」上时（拓扑、发布策略、数据模型），
-  agent 给每个选项配一张图，你认图选择;节点级 `x-content` 用图或一段富文本
+- **能看图就别读字** —— 选项差在「形状」上时（拓扑、发布策略、数据模型）， agent
+  给每个选项配一张图，你认图选择;节点级 `x-content` 用图或一段富文本
   解释字段背景;`mermaid` 控件让答案本身就是一张可编辑、实时预览的图。
 - **访谈纪律内置** —— 开放式设计需要深度访谈时，skill 优先使用你已安装的
   grilling 类 skill，都没有时回退到内置的
@@ -159,14 +159,14 @@ Windows / PowerShell 7+:`pwsh scripts/ask.ps1 -Schema … -Title …`。没有 P
 [`examples/`](./examples/) 里可直接运行的表单 (每个都带 `.defaults.json`
 推荐答案):
 
-| 示例                                                                                | 场景                                                |
-| ----------------------------------------------------------------------------------- | --------------------------------------------------- |
-| [`env-schema.json`](./examples/env-schema.json)                                     | 最小 4 字段部署表单 —— 首次冒烟测试                 |
-| [`web-research-brief.schema.json`](./examples/web-research-brief.schema.json)       | 调研：联网调研任务确认 —— 用上画廊全部控件 (中文)   |
-| [`feature-brief.schema.json`](./examples/feature-brief.schema.json)                 | 12 问需求简报，覆盖全部控件类型 (英文)              |
-| [`invoice-reimbursement.schema.json`](./examples/invoice-reimbursement.schema.json) | 办公：发票报销处理 (中文，每个选择带「其他」逃生口) |
-| [`ecommerce-main-image.schema.json`](./examples/ecommerce-main-image.schema.json)   | 设计：电商主图 —— 尺寸、字号、颜色、渐变背景 (中文) |
-| [`seo-diagnosis.schema.json`](./examples/seo-diagnosis.schema.json)                 | SEO 排查：站点、问题、关键词、竞品 (中文)           |
+| 示例                                                                                    | 场景                                                |
+| --------------------------------------------------------------------------------------- | --------------------------------------------------- |
+| [`env-schema.json`](./examples/env-schema.json)                                         | 最小 4 字段部署表单 —— 首次冒烟测试                 |
+| [`web-research-brief.schema.json`](./examples/web-research-brief.schema.json)           | 调研：联网调研任务确认 —— 用上画廊全部控件 (中文)   |
+| [`feature-brief.schema.json`](./examples/feature-brief.schema.json)                     | 12 问需求简报，覆盖全部控件类型 (英文)              |
+| [`invoice-reimbursement.schema.json`](./examples/invoice-reimbursement.schema.json)     | 办公：发票报销处理 (中文，每个选择带「其他」逃生口) |
+| [`ecommerce-main-image.schema.json`](./examples/ecommerce-main-image.schema.json)       | 设计：电商主图 —— 尺寸、字号、颜色、渐变背景 (中文) |
+| [`seo-diagnosis.schema.json`](./examples/seo-diagnosis.schema.json)                     | SEO 排查：站点、问题、关键词、竞品 (中文)           |
 | [`deployment-architecture.schema.json`](./examples/deployment-architecture.schema.json) | 架构选型：每个选项自带一张图 (中文，图形界面参考例) |
 
 ## 脚本契约
