@@ -184,3 +184,20 @@ something similar. Reuse a prior answer as defaults via `--config`.
   with a live preview. A figure explains; it is never the value.
 - Reference: `examples/deployment-architecture.schema.json` (every option with a
   diagram) and `schemaui ≥ 0.16` for the figure surfaces.
+
+## Theme customization
+
+- When the user wants the form to match their project's design system, write a
+  small CSS file overriding the web UI's design tokens — `--color-primary`,
+  `--color-background`, `--color-ring`, `--radius-*`, plus a `.dark { … }` block
+  for dark mode — and pass it with `--theme PATH`. It is served at
+  `/api/v1/theme.css` and layered over the built-in stylesheet; no build step.
+  schemaui's own `examples/themes/midnight.css` is the shape to copy.
+- To map an external design system, translate its variables onto schemaui's
+  token names in that file (e.g. a design system's `--xx-accent` becomes
+  `--color-primary`); list each mapping as a comment next to the override.
+- For a fully custom frontend, the engine serves a plain REST contract
+  (`GET /api/v1/session`, `POST /api/v1/save|exit|validate|preview`) and can
+  host any directory containing an `index.html` via `--frontend DIR` — see
+  schemaui's `examples/frontend/`. Only reach for this when CSS cannot express
+  the request.

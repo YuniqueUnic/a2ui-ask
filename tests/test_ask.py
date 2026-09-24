@@ -180,6 +180,7 @@ def _namespace(**overrides) -> argparse.Namespace:
         "timeout": 300,
         "force": False,
         "stdout_echo": False,
+        "theme": None,
     }
     base.update(overrides)
     return argparse.Namespace(**base)
@@ -193,6 +194,7 @@ def _build(**overrides) -> list[str]:
         Path("a.json"),
         8787,
         native_timeout=True,
+        web_theme=False,
     )
 
 
@@ -226,6 +228,40 @@ def test_build_command_keeps_the_deadline_before_the_greedy_output_flag():
     # would be read as a second output path instead of a flag.
     cmd = _build(timeout=90)
     assert cmd.index("--timeout") < cmd.index("-o")
+
+
+def test_build_command_passes_the_theme_to_a_capable_engine():
+    cmd = ask.build_command(
+        "schemaui",
+        _namespace(theme="theme.css"),
+        Path("s.json"),
+        Path("a.json"),
+        8787,
+        native_timeout=True,
+        web_theme=True,
+    )
+    assert cmd[cmd.index("--web-theme") + 1] == "theme.css"
+    # the theme flag rides before `-o`, which would swallow it otherwise
+    assert cmd.index("--web-theme") < cmd.index("-o")
+
+
+def test_build_command_omits_the_theme_for_an_older_engine():
+    # Same discipline as `--timeout`: an unknown flag is a hard clap error on
+    # an old build, so the capability probe drops the flag instead.
+    cmd = ask.build_command(
+        "schemaui",
+        _namespace(theme="theme.css"),
+        Path("s.json"),
+        Path("a.json"),
+        8787,
+        native_timeout=True,
+        web_theme=False,
+    )
+    assert "--web-theme" not in cmd
+
+
+def test_build_command_sends_no_theme_flag_without_a_stylesheet():
+    assert "--web-theme" not in _build(web_theme=True)
 
 
 def test_supports_native_timeout_reads_the_help_output(tmp_path, monkeypatch):
@@ -740,6 +776,50 @@ def test_e2e_stdin_schema_is_persisted(tmp_path: Path):
     answers = list(tmp_path.glob(".schemaui/answers/inline-question-*.json"))
     assert len(answers) == 1
     assert read_json(answers[0]) == ANSWER
+
+
+@needs_binary
+def test_e2e_theme_stylesheet_is_served(tmp_path: Path):
+    """`--theme` reaches the engine: the custom layer answers at
+    `/api/v1/theme.css`, verbatim, next to the built-in stylesheet."""
+    theme = tmp_path / "theme.css"
+    theme.write_text(
+        "/* e2e-theme-marker */\n"
+        ":root { --color-primary: oklch(0.6 0.2 145); }\n"
+        ".dark { --color-primary: oklch(0.75 0.18 145); }\n",
+        encoding="utf-8",
+    )
+    proc = subprocess.Popen(
+        [
+            sys.executable,
+            str(PY_SCRIPT),
+            "--schema",
+            str(EXAMPLE_SCHEMA),
+            "--theme",
+            str(theme),
+            "--title",
+            "Themed",
+            "--port",
+            "0",
+            "--no-open",
+        ],
+        cwd=tmp_path,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        encoding="utf-8",
+    )
+    try:
+        url = read_until(proc, "SCHEMAUI_URL=").strip().split("=", 1)[1].rstrip("/")
+        with _get_first(url, ("/api/v1/theme.css", "/api/theme.css")) as resp:
+            assert resp.status == 200
+            css = resp.read().decode("utf-8")
+        assert "e2e-theme-marker" in css
+        assert "--color-primary" in css
+        drive_session(url, ANSWER)
+        assert proc.wait(timeout=15) == 0
+    finally:
+        proc.kill() if proc.poll() is None else None
 
 
 def test_missing_binary_exits_3(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):

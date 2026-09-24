@@ -38,6 +38,7 @@ param(
   [string]$Description,
   [string]$Topic,
   [string]$Output,
+  [string]$Theme,
 
   [Alias("Host")]
   [string]$BindHost = "0.0.0.0",
@@ -136,6 +137,16 @@ if ($Timeout -gt 0) {
   }
 }
 
+# Same probe for the theme stylesheet: present from schemaui 0.16 on.
+$webTheme = $false
+if ($Theme) {
+  $help = (& $binary web --help 2>$null | Out-String)
+  $webTheme = $help -match "--web-theme"
+  if (-not $webTheme) {
+    [Console]::Error.WriteLine("Note: this schemaui build has no --web-theme, so the stylesheet was not applied. Upgrade schemaui-cli to 0.16+ to theme the form.")
+  }
+}
+
 if ($Schema -eq "-") {
   $payload = [Console]::In.ReadToEnd()
   try { $null = $payload | ConvertFrom-Json } catch {
@@ -182,6 +193,7 @@ function Invoke-SchemauiSession([int]$BindPort) {
   # show the user a countdown, and it refuses to write a half-filled answer.
   if ($Timeout -gt 0 -and $nativeTimeout) { $argList += @("--timeout", "$Timeout") }
   if ($Force) { $argList += "--force" }
+  if ($Theme -and $webTheme) { $argList += @("--web-theme", $Theme) }
   $argList += @("-o", $Output)
   if ($StdoutEcho) { $argList += "-" }
   $argString = ($argList | ForEach-Object { Quote-Arg $_ }) -join " "

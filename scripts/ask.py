@@ -211,6 +211,11 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument(
         "--force", action="store_true", help="overwrite an existing answer file"
     )
+    parser.add_argument(
+        "--theme",
+        help="CSS file layered over the web UI's design tokens (--color-*/--radius-*); "
+        "served at /api/v1/theme.css (schemaui ≥ 0.16; silently skipped on older builds)",
+    )
     return parser.parse_args(argv)
 
 
@@ -260,6 +265,32 @@ def supports_native_timeout(binary: str) -> bool:
     return "--timeout" in (proc.stdout + proc.stderr)
 
 
+def supports_web_theme(binary: str) -> bool:
+    """Whether this schemaui build understands `--web-theme`.
+
+    Same probe discipline as `supports_native_timeout`: one `--help`, no
+    assumptions. Introduced after the v1 API, so any engine new enough for
+    the versioned routes almost certainly has it — but the probe costs
+    nothing and keeps ancient builds working.
+    """
+    try:
+        argv = shlex.split(binary, posix=(os.name != "nt"))
+    except ValueError:
+        return False
+    try:
+        proc = subprocess.run(
+            [*argv, "--help"],
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            timeout=10,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return False
+    return "--web-theme" in (proc.stdout + proc.stderr)
+
+
 def build_command(
     binary: str,
     args: argparse.Namespace,
@@ -267,6 +298,7 @@ def build_command(
     answer: Path,
     port: int,
     native_timeout: bool,
+    web_theme: bool = False,
 ) -> list[str]:
     # NOTE: `-o` is greedy (clap `num_args = 1..` + hyphen values): it swallows
     # every following token, including later flags. Every other flag must come
@@ -294,6 +326,8 @@ def build_command(
         cmd += ["--timeout", str(args.timeout)]
     if args.force:
         cmd += ["--force"]
+    if args.theme and web_theme:
+        cmd += ["--web-theme", str(args.theme)]
     cmd += ["-o", str(answer)]
     if args.stdout_echo:
         cmd.append("-")
@@ -470,6 +504,13 @@ def main(argv: list[str] | None = None) -> int:
     answer.parent.mkdir(parents=True, exist_ok=True)
 
     native_timeout = supports_native_timeout(binary)
+    web_theme = bool(args.theme) and supports_web_theme(binary)
+    if args.theme and not web_theme:
+        print(
+            "Note: this schemaui build has no --web-theme, so the stylesheet "
+            "was not applied. Upgrade schemaui-cli to 0.16+ to theme the form.",
+            file=sys.stderr,
+        )
     if args.timeout > 0 and not native_timeout:
         print(
             f"Note: this schemaui build has no --timeout, so the {args.timeout}s "
@@ -479,7 +520,7 @@ def main(argv: list[str] | None = None) -> int:
         )
 
     code, announced = run_session(
-        build_command(binary, args, schema, answer, args.port, native_timeout),
+        build_command(binary, args, schema, answer, args.port, native_timeout, web_theme),
         args,
         answer,
         native_timeout,
@@ -490,7 +531,7 @@ def main(argv: list[str] | None = None) -> int:
             file=sys.stderr,
         )
         code, _ = run_session(
-            build_command(binary, args, schema, answer, 0, native_timeout),
+            build_command(binary, args, schema, answer, 0, native_timeout, web_theme),
             args,
             answer,
             native_timeout,

@@ -26,6 +26,7 @@ TIMEOUT=300
 OPEN_BROWSER=1
 STDOUT_ECHO=0
 FORCE=0
+THEME=""
 SCHEMA=""
 CONFIG=""
 TITLE=""
@@ -55,6 +56,8 @@ Usage: ask.sh --schema PATH [options]
   --no-open           do not open a browser (remote/headless runs)
   --stdout-echo       also pass '-o -' so schemaui echoes the result JSON
   --force             overwrite an existing answer file
+  --theme CSS         stylesheet layered over the web UI's design tokens
+                      (--color-*/--radius-*), served at /api/v1/theme.css
 
 Agents: relay SCHEMAUI_URL to the user in chat, then block on this command.
 Any non-zero exit means: fall back to plain-text questions.
@@ -75,6 +78,7 @@ while [ $# -gt 0 ]; do
     --no-open) OPEN_BROWSER=0; shift ;;
     --stdout-echo) STDOUT_ECHO=1; shift ;;
     --force) FORCE=1; shift ;;
+    --theme) THEME="$2"; shift 2 ;;
     -h|--help) usage; exit 0 ;;
     *) echo "unknown argument: $1" >&2; usage >&2; exit 2 ;;
   esac
@@ -100,6 +104,13 @@ if [ "$TIMEOUT" -gt 0 ] && "$BINARY" web --help 2>&1 | grep -q -- '--timeout'; t
   NATIVE_TIMEOUT=1
 elif [ "$TIMEOUT" -gt 0 ]; then
   echo "Note: this schemaui build has no --timeout, so the ${TIMEOUT}s deadline is enforced by killing the session instead." >&2
+fi
+
+WEB_THEME=0
+if [ -n "$THEME" ] && "$BINARY" web --help 2>&1 | grep -q -- '--web-theme'; then
+  WEB_THEME=1
+elif [ -n "$THEME" ]; then
+  echo "Note: this schemaui build has no --web-theme, so the stylesheet was not applied. Upgrade schemaui-cli to 0.16+ to theme the form." >&2
 fi
 
 slugify() {
@@ -157,6 +168,7 @@ run_session() {
   # show the user a countdown, and it refuses to write a half-filled answer.
   [ "$TIMEOUT" -gt 0 ] && [ "$NATIVE_TIMEOUT" -eq 1 ] && set -- "$@" --timeout "$TIMEOUT"
   [ "$FORCE" -eq 1 ] && set -- "$@" --force
+  [ -n "$THEME" ] && [ "$WEB_THEME" -eq 1 ] && set -- "$@" --web-theme "$THEME"
   set -- "$@" -o "$OUTPUT"
   [ "$STDOUT_ECHO" -eq 1 ] && set -- "$@" -
 
