@@ -90,6 +90,7 @@ GALLERY_CONTROLS = {
     "/urgency": "segmented",
     "/include_competitor_pricing": "checkbox",
     "/accent_color": "color",
+    "/report_flow": "mermaid",
 }
 
 # The other half of that contract: a hint is opt-in, so these fields must stay
@@ -291,18 +292,47 @@ def read_until(proc: subprocess.Popen, marker: str, timeout: float = 30) -> str:
     raise AssertionError(f"never saw {marker!r} on stdout")
 
 
+def _get_first(url: str, paths: tuple[str, ...]):
+    """GET the first path that answers; schemaui ≥ 0.9 serves /api/v1/*, older
+    engines the unversioned routes. A 404 falls through, anything else raises."""
+    last: Exception | None = None
+    for path in paths:
+        try:
+            return urllib.request.urlopen(f"{url}{path}", timeout=5)
+        except urllib.error.HTTPError as error:
+            if error.code == 404:
+                last = error
+                continue
+            raise
+    raise last  # type: ignore[misc]
+
+
+def _post_first(url: str, paths: tuple[str, ...], body: bytes):
+    last: Exception | None = None
+    for path in paths:
+        req = urllib.request.Request(
+            f"{url}{path}",
+            data=body,
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        try:
+            return urllib.request.urlopen(req, timeout=5)
+        except urllib.error.HTTPError as error:
+            if error.code == 404:
+                last = error
+                continue
+            raise
+    raise last  # type: ignore[misc]
+
+
 def drive_session(url: str, payload: dict) -> None:
     """Play the role of the user: load the session, then Save & Exit."""
     url = url.rstrip("/")
-    with urllib.request.urlopen(f"{url}/api/session", timeout=5) as resp:
+    with _get_first(url, ("/api/v1/session", "/api/session")) as resp:
         assert resp.status == 200
-    req = urllib.request.Request(
-        f"{url}/api/exit",
-        data=json.dumps({"data": payload, "commit": True}).encode(),
-        headers={"Content-Type": "application/json"},
-        method="POST",
-    )
-    with urllib.request.urlopen(req, timeout=5) as resp:
+    body = json.dumps({"data": payload, "commit": True}).encode()
+    with _post_first(url, ("/api/v1/exit", "/api/exit"), body) as resp:
         assert resp.status == 200
 
 
@@ -410,7 +440,7 @@ def test_e2e_feature_brief_full_control_showcase(tmp_path: Path):
     )
     try:
         url = read_until(proc, "SCHEMAUI_URL=").strip().split("=", 1)[1].rstrip("/")
-        with urllib.request.urlopen(f"{url}/api/session", timeout=5) as resp:
+        with _get_first(url, ("/api/v1/session", "/api/session")) as resp:
             session = json.loads(resp.read())
         kinds = [
             next(iter(root["kind"].values()) if isinstance(root["kind"], dict) else root["kind"])
@@ -479,7 +509,7 @@ def test_e2e_web_research_brief_covers_the_control_gallery(tmp_path: Path):
     )
     try:
         url = read_until(proc, "SCHEMAUI_URL=").strip().split("=", 1)[1].rstrip("/")
-        with urllib.request.urlopen(f"{url}/api/session", timeout=5) as resp:
+        with _get_first(url, ("/api/v1/session", "/api/session")) as resp:
             session = json.loads(resp.read())
         by_pointer = {node["pointer"]: node for node in collect_nodes(session["ui_ast"]["roots"])}
 
@@ -496,6 +526,11 @@ def test_e2e_web_research_brief_covers_the_control_gallery(tmp_path: Path):
         assert by_pointer["/market"]["kind"]["enum_values"] is not None
         # ... and `x-multiline` marks a string multi-line without naming a control
         assert by_pointer["/background"]["kind"]["multiline"] is True
+
+        # figures: the depth slider carries a node-level mermaid x-content, and
+        # the report flow is edited as a live-preview mermaid source
+        assert by_pointer["/depth_level"]["content"]["type"] == "mermaid"
+        assert by_pointer["/report_flow"]["control"] == "mermaid"
 
         # the slider/range variants the gallery separates: a derived step
         # against a declared one, and bare against labelled against unit marks
