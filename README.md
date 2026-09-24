@@ -16,12 +16,13 @@ you and the agent can re-read later.
 Every control the engine can draw — sliders, range sliders with marks, segmented
 controls, radio groups, switches, a custom color picker, conditional fields —
 driven entirely by schema hints, and the skill tells the agent to reach for
-them. Figures ride the same hints: a question or an option can carry a
-**Mermaid diagram, an inline SVG, or sanitised Markdown** (`x-content` /
-`x-options`), and an answer can *be* a diagram via the live-preview
-`x-control: "mermaid"` editor. The full set lives in
+them. Figures ride the same hints: a question or an option can carry a **Mermaid
+diagram, an inline SVG, or sanitised Markdown** (`x-content` / `x-options`), and
+an answer can _be_ a diagram via the live-preview `x-control: "mermaid"` editor.
+The full set lives in
 [`schemaui`'s controls gallery](https://github.com/YuniqueUnic/schemaui/blob/main/examples/controls-gallery.schema.json)
-and [rich-content gallery](https://github.com/YuniqueUnic/schemaui/blob/main/examples/rich-content.schema.json);
+and
+[rich-content gallery](https://github.com/YuniqueUnic/schemaui/blob/main/examples/rich-content.schema.json);
 [`examples/web-research-brief.schema.json`](./examples/web-research-brief.schema.json)
 is the worked example that uses every one of them (中文).
 
@@ -154,30 +155,30 @@ without Python: `bash scripts/ask.sh --schema …`.
   ranges, colour pickers, segmented controls, radio groups, checkboxes, and
   conditional fields, alongside text, number, single/multi select, oneOf
   compositions, nested objects, record lists, and key/value maps.
-- **Show, don't tell** — when options differ in *shape* (topologies, rollout
-  strategies, data models), the agent attaches a diagram to each option and
-  lets you pick by recognising the picture; node-level `x-content` explains a
-  field with a figure or prose; a `mermaid` control makes the answer itself an
+- **Show, don't tell** — when options differ in _shape_ (topologies, rollout
+  strategies, data models), the agent attaches a diagram to each option and lets
+  you pick by recognising the picture; node-level `x-content` explains a field
+  with a figure or prose; a `mermaid` control makes the answer itself an
   editable, live-previewed diagram.
 - **Interview discipline built in** — for open-ended designs, the skill defers
   to whatever grilling skill you already have, and falls back to the bundled
-  [`skills/grill-with-docs`](./skills/grill-with-docs/SKILL.md): one question
-  at a time, every question with a recommended answer, every question grounded
-  in the project's docs.
+  [`skills/grill-with-docs`](./skills/grill-with-docs/SKILL.md): one question at
+  a time, every question with a recommended answer, every question grounded in
+  the project's docs.
 
 ## Examples
 
 Runnable forms in [`examples/`](./examples/) (each with recommended answers in
 the matching `.defaults.json`):
 
-| Example                                                                             | Scenario                                                                  |
-| ----------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
-| [`env-schema.json`](./examples/env-schema.json)                                     | minimal 4-field deploy form — first smoke test                            |
-| [`web-research-brief.schema.json`](./examples/web-research-brief.schema.json)       | research: scope a web-research task — every control in the gallery (中文) |
-| [`feature-brief.schema.json`](./examples/feature-brief.schema.json)                 | 12-question requirements brief using every control type (EN)              |
-| [`invoice-reimbursement.schema.json`](./examples/invoice-reimbursement.schema.json) | office: invoice & expense reimbursement (中文)                            |
-| [`ecommerce-main-image.schema.json`](./examples/ecommerce-main-image.schema.json)   | design: e-commerce hero images — sizes, fonts, colors, backgrounds (中文) |
-| [`seo-diagnosis.schema.json`](./examples/seo-diagnosis.schema.json)                 | SEO triage: site, issues, keywords, competitors (中文)                    |
+| Example                                                                                 | Scenario                                                                           |
+| --------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| [`env-schema.json`](./examples/env-schema.json)                                         | minimal 4-field deploy form — first smoke test                                     |
+| [`web-research-brief.schema.json`](./examples/web-research-brief.schema.json)           | research: scope a web-research task — every control in the gallery (中文)          |
+| [`feature-brief.schema.json`](./examples/feature-brief.schema.json)                     | 12-question requirements brief using every control type (EN)                       |
+| [`invoice-reimbursement.schema.json`](./examples/invoice-reimbursement.schema.json)     | office: invoice & expense reimbursement (中文)                                     |
+| [`ecommerce-main-image.schema.json`](./examples/ecommerce-main-image.schema.json)       | design: e-commerce hero images — sizes, fonts, colors, backgrounds (中文)          |
+| [`seo-diagnosis.schema.json`](./examples/seo-diagnosis.schema.json)                     | SEO triage: site, issues, keywords, competitors (中文)                             |
 | [`deployment-architecture.schema.json`](./examples/deployment-architecture.schema.json) | architecture choice: every option carries a diagram (中文 — the figures reference) |
 
 ## Script contract

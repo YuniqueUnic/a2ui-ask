@@ -121,38 +121,38 @@ installed one — check their skills directory for something like `grill-me`,
 none exists, fall back to the one bundled here:
 [`skills/grill-with-docs/SKILL.md`](./skills/grill-with-docs/SKILL.md) — the
 same one-question-at-a-time, recommend-then-ask discipline, plus a rule to
-ground every question in the project's docs and the galleries referenced
-above, and to end by turning the settled decisions into a form. The bundled
-skill is a convenience so a fresh install works out of the box; it never
-overrides a grilling skill the user chose themselves.
+ground every question in the project's docs and the galleries referenced above,
+and to end by turning the settled decisions into a form. The bundled skill is a
+convenience so a fresh install works out of the box; it never overrides a
+grilling skill the user chose themselves.
 
 ## Question type → schema cheat sheet
 
-| You need              | Schema shape                                                                                                                     | Renders as                                          |
-| --------------------- | -------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------- |
-| short text input      | `{"type": "string", "minLength": …, "pattern": …}`                                                                               | inline text field                                   |
-| long text input       | `{"type": "string", "x-multiline": true}`                                                                                        | multi-line text area                                |
-| number                | `{"type": "integer", "minimum": …, "maximum": …}`                                                                                | numeric field with guards                           |
-| number on a scale     | `{"type": "…", "minimum": …, "maximum": …, "x-control": "slider"}`                                                               | slider with a live readout                          |
-| slider with labels    | slider + `"x-slider-marks": [{"value": …, "label": …}, …]`                                                                       | slider with labelled stops                          |
-| two-number interval   | `{"type": "array", "items": {"type": "number"}, "minItems": 2, "maxItems": 2, "minimum": …, "maximum": …, "x-control": "range"}` | two-handle range slider                             |
-| colour                | `{"type": "string", "x-control": "color"}`                                                                                       | colour picker, not a text box                       |
-| few short options     | `{"type": "string", "enum": [...], "x-control": "segmented"}`                                                                    | inline segmented control                            |
-| few verbose options   | `{"type": "string", "enum": [...], "x-control": "radio"}`                                                                        | stacked radio group                                 |
-| yes/no                | `{"type": "boolean"}`                                                                                                            | toggle                                              |
-| yes/no, part of a set | `{"type": "boolean", "x-control": "checkbox"}`                                                                                   | checkbox                                            |
-| single select         | `{"type": "string", "enum": [...]}`                                                                                              | popup selector                                      |
-| multi select          | `{"type": "array", "items": {"enum": [...]}, "uniqueItems": true}`                                                               | checkbox list (one per option)                      |
-| select + escape hatch | `enum: [..., "其他"]` plus a sibling `"<field>_custom"` carrying `x-visible-when`                                                | selector, then a text field once 「其他」 is picked |
-| conditional field     | `"x-visible-when": {"field": <sibling>, "op": "equals"\|"contains", "value": …}`                                                 | hidden until the sibling matches                    |
-| explain with a diagram| `"x-content": {"type": "mermaid", "source": "flowchart …"}` on the field                                                         | rendered figure above the control                   |
-| explain with prose    | `"x-content": {"type": "markdown", "source": "**why** this matters…"}`                                                           | sanitised rich text above the control               |
-| options worth seeing  | `"x-options": [{"label": …, "description": …, "content": {"type": "mermaid", "source": …}}, …]` (aligned with `enum` by index)   | each option shows its own figure                    |
-| edit a diagram        | `{"type": "string", "x-control": "mermaid"}`                                                                                     | mermaid source editor with a live preview           |
-| pick-one-with-config  | `{"oneOf": [{"title": "A", …}, {"title": "B", …}]}`                                                                              | variant chooser + subform                           |
-| grouped fields        | `{"type": "object", "properties": {…}}`                                                                                          | nested section                                      |
-| list of records       | `{"type": "array", "items": {"type": "object", "properties": {…}}}`                                                              | list + per-entry overlay                            |
-| free-form key/value   | `{"type": "object", "additionalProperties": {"type": "string"}}`                                                                 | key/value editor                                    |
+| You need               | Schema shape                                                                                                                     | Renders as                                          |
+| ---------------------- | -------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------- |
+| short text input       | `{"type": "string", "minLength": …, "pattern": …}`                                                                               | inline text field                                   |
+| long text input        | `{"type": "string", "x-multiline": true}`                                                                                        | multi-line text area                                |
+| number                 | `{"type": "integer", "minimum": …, "maximum": …}`                                                                                | numeric field with guards                           |
+| number on a scale      | `{"type": "…", "minimum": …, "maximum": …, "x-control": "slider"}`                                                               | slider with a live readout                          |
+| slider with labels     | slider + `"x-slider-marks": [{"value": …, "label": …}, …]`                                                                       | slider with labelled stops                          |
+| two-number interval    | `{"type": "array", "items": {"type": "number"}, "minItems": 2, "maxItems": 2, "minimum": …, "maximum": …, "x-control": "range"}` | two-handle range slider                             |
+| colour                 | `{"type": "string", "x-control": "color"}`                                                                                       | colour picker, not a text box                       |
+| few short options      | `{"type": "string", "enum": [...], "x-control": "segmented"}`                                                                    | inline segmented control                            |
+| few verbose options    | `{"type": "string", "enum": [...], "x-control": "radio"}`                                                                        | stacked radio group                                 |
+| yes/no                 | `{"type": "boolean"}`                                                                                                            | toggle                                              |
+| yes/no, part of a set  | `{"type": "boolean", "x-control": "checkbox"}`                                                                                   | checkbox                                            |
+| single select          | `{"type": "string", "enum": [...]}`                                                                                              | popup selector                                      |
+| multi select           | `{"type": "array", "items": {"enum": [...]}, "uniqueItems": true}`                                                               | checkbox list (one per option)                      |
+| select + escape hatch  | `enum: [..., "其他"]` plus a sibling `"<field>_custom"` carrying `x-visible-when`                                                | selector, then a text field once 「其他」 is picked |
+| conditional field      | `"x-visible-when": {"field": <sibling>, "op": "equals"\|"contains", "value": …}`                                                 | hidden until the sibling matches                    |
+| explain with a diagram | `"x-content": {"type": "mermaid", "source": "flowchart …"}` on the field                                                         | rendered figure above the control                   |
+| explain with prose     | `"x-content": {"type": "markdown", "source": "**why** this matters…"}`                                                           | sanitised rich text above the control               |
+| options worth seeing   | `"x-options": [{"label": …, "description": …, "content": {"type": "mermaid", "source": …}}, …]` (aligned with `enum` by index)   | each option shows its own figure                    |
+| edit a diagram         | `{"type": "string", "x-control": "mermaid"}`                                                                                     | mermaid source editor with a live preview           |
+| pick-one-with-config   | `{"oneOf": [{"title": "A", …}, {"title": "B", …}]}`                                                                              | variant chooser + subform                           |
+| grouped fields         | `{"type": "object", "properties": {…}}`                                                                                          | nested section                                      |
+| list of records        | `{"type": "array", "items": {"type": "object", "properties": {…}}}`                                                              | list + per-entry overlay                            |
+| free-form key/value    | `{"type": "object", "additionalProperties": {"type": "string"}}`                                                                 | key/value editor                                    |
 
 `x-visible-when` is not only for escape hatches: use it whenever a question only
 applies conditionally (`has_changes` → `change_notes`, `cache.enabled` →
@@ -183,20 +183,19 @@ removes typing or removes a wrong answer, not for decoration.
 `x-control` is a _request_, and bounds stay validation keywords: a slider needs
 `minimum`/`maximum` on the value, and a hint the engine cannot honour falls back
 to that shape's default control rather than failing. Slider/range/colour/
-segmented/radio hints need `schemaui` ≥ 0.14 / `schemaui-cli` ≥ 0.8; the
-figure surfaces below need `schemaui` ≥ 0.16 / `schemaui-cli` ≥ 0.9. An older
-engine ignores unknown `x-` keywords, so the form still runs — it just shows
-plain inputs everywhere.
+segmented/radio hints need `schemaui` ≥ 0.14 / `schemaui-cli` ≥ 0.8; the figure
+surfaces below need `schemaui` ≥ 0.16 / `schemaui-cli` ≥ 0.9. An older engine
+ignores unknown `x-` keywords, so the form still runs — it just shows plain
+inputs everywhere.
 
 Read these before writing your own: `examples/web-research-brief.schema.json`
 (中文 — the worked reference: every control in the gallery, escape hatches,
 conditional fields, `oneOf`, a record list, a key/value map, and figures on
-nodes and options), `examples/feature-brief.schema.json` (English, every
-control type) and `examples/invoice-reimbursement.schema.json` (中文, escape
-hatches on every select). For what figure-bearing options look like as a
-complete form, read
-`examples/deployment-architecture.schema.json` (中文 — every option carries a
-diagram). The engine's own galleries,
+nodes and options), `examples/feature-brief.schema.json` (English, every control
+type) and `examples/invoice-reimbursement.schema.json` (中文, escape hatches on
+every select). For what figure-bearing options look like as a complete form,
+read `examples/deployment-architecture.schema.json` (中文 — every option carries
+a diagram). The engine's own galleries,
 [`schemaui/examples/controls-gallery.schema.json`](https://github.com/YuniqueUnic/schemaui/blob/main/examples/controls-gallery.schema.json)
 and
 [`schemaui/examples/rich-content.schema.json`](https://github.com/YuniqueUnic/schemaui/blob/main/examples/rich-content.schema.json),
@@ -204,31 +203,32 @@ show every hint value and every figure surface side by side.
 
 ## Figures: when a picture answers faster than prose
 
-Some choices are easier to **see** than to read. The engine renders three
-kinds of figure content — Mermaid diagrams, raw SVG, and sanitised Markdown —
-and puts them in three places. Reach for them when the user would otherwise
-have to mentally simulate your prose:
+Some choices are easier to **see** than to read. The engine renders three kinds
+of figure content — Mermaid diagrams, raw SVG, and sanitised Markdown — and puts
+them in three places. Reach for them when the user would otherwise have to
+mentally simulate your prose:
 
-1. **On the node** — `"x-content": {"type": "mermaid"|"svg"|"markdown", "source": …}`
-   renders a figure above the control. Use it when the field needs context a
-   sentence can't carry: the request flow the timeout applies to, the pipeline
-   the stage names refer to, a legend of the states.
-2. **On the options** — `"x-options"` entries (aligned with `enum` by index)
-   may each carry `label`, `description`, and `content` (same shape as
-   `x-content`). Use it when the options are *shapes of a system* — topologies,
-   rollouts, data models — and the user picks by recognising the picture.
-   A select shows each option's figure inline; `radio` shows it under the
-   label with the description.
+1. **On the node** —
+   `"x-content": {"type": "mermaid"|"svg"|"markdown", "source": …}` renders a
+   figure above the control. Use it when the field needs context a sentence
+   can't carry: the request flow the timeout applies to, the pipeline the stage
+   names refer to, a legend of the states.
+2. **On the options** — `"x-options"` entries (aligned with `enum` by index) may
+   each carry `label`, `description`, and `content` (same shape as `x-content`).
+   Use it when the options are _shapes of a system_ — topologies, rollouts, data
+   models — and the user picks by recognising the picture. A select shows each
+   option's figure inline; `radio` shows it under the label with the
+   description.
 3. **As the value itself** — `"x-control": "mermaid"` makes the field's string
    value a Mermaid source, edited in a live-preview editor. Only for fields
-   whose *answer is a diagram* (a flow to review, a topology to correct) —
-   never as decoration on a config answer.
+   whose _answer is a diagram_ (a flow to review, a topology to correct) — never
+   as decoration on a config answer.
 
 Hard rules (the engine rejects the schema on these): every `source` must be a
-non-empty string; an `x-options` array aligns with `enum` by index, so keep
-the lengths aligned and give plain options `{}`/a `label` only; **`segmented`
-cannot show figures** — use `radio` or `select` when options carry content;
-options that mean "none/not configured" should not carry a figure. A figure is
+non-empty string; an `x-options` array aligns with `enum` by index, so keep the
+lengths aligned and give plain options `{}`/a `label` only; **`segmented` cannot
+show figures** — use `radio` or `select` when options carry content; options
+that mean "none/not configured" should not carry a figure. A figure is
 explanatory, never the value: the answer file still receives the enum string.
 
 Choose figures the way you choose controls — because they remove work, not for
@@ -343,15 +343,15 @@ something similar. Reuse a prior answer as defaults via `--config`.
 Six runnable forms live in `examples/` (each with a `.defaults.json` carrying
 the recommended answers):
 
-| Example                             | Scenario                                                                             |
-| ----------------------------------- | ------------------------------------------------------------------------------------ |
-| `env-schema.json`                   | minimal 4-field deploy form — first smoke test                                       |
-| `web-research-brief.schema.json`    | research: scope a web-research task — **every control in the gallery** + figures on nodes and a mermaid editor (中文) |
-| `feature-brief.schema.json`         | 12-question requirements brief, every control type + both hints (EN)                 |
-| `invoice-reimbursement.schema.json` | office: invoice & expense reimbursement (中文, escape hatches)                       |
-| `ecommerce-main-image.schema.json`  | design: e-commerce hero image specs — sizes, fonts, colors, oneOf backgrounds (中文) |
-| `seo-diagnosis.schema.json`         | SEO triage: site, issues, keywords, competitors (中文)                               |
-| `deployment-architecture.schema.json` | architecture choice: **every option carries a diagram** (中文 — the figure surfaces reference) |
+| Example                               | Scenario                                                                                                              |
+| ------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `env-schema.json`                     | minimal 4-field deploy form — first smoke test                                                                        |
+| `web-research-brief.schema.json`      | research: scope a web-research task — **every control in the gallery** + figures on nodes and a mermaid editor (中文) |
+| `feature-brief.schema.json`           | 12-question requirements brief, every control type + both hints (EN)                                                  |
+| `invoice-reimbursement.schema.json`   | office: invoice & expense reimbursement (中文, escape hatches)                                                        |
+| `ecommerce-main-image.schema.json`    | design: e-commerce hero image specs — sizes, fonts, colors, oneOf backgrounds (中文)                                  |
+| `seo-diagnosis.schema.json`           | SEO triage: site, issues, keywords, competitors (中文)                                                                |
+| `deployment-architecture.schema.json` | architecture choice: **every option carries a diagram** (中文 — the figure surfaces reference)                        |
 
 ```bash
 python3 scripts/ask.py \
