@@ -154,6 +154,14 @@ Windows / PowerShell 7+:`pwsh scripts/ask.ps1 -Schema … -Title …`。没有 P
   [`skills/grill-with-docs`](./skills/grill-with-docs/SKILL.md)：一次一问、
   每问带推荐答案、每个问题都以项目文档为依据。
 
+- **主题随项目走** —— 一个纯 CSS 文件覆盖 Web UI 的设计 token
+  （`--color-*`、`--radius-*`，亮暗两套），用 `--theme` 传入，引擎在
+  `/api/v1/theme.css` 分层提供服务;外部设计系统按「一条注释一条映射」 翻译成
+  schemaui 的 token。要彻底自定义前端时，可用 `--frontend` 托管 自己的
+  `index.html`，对接纯 REST 契约。 grilling 类 skill，都没有时回退到内置的
+  [`skills/grill-with-docs`](./skills/grill-with-docs/SKILL.md)：一次一问、
+  每问带推荐答案、每个问题都以项目文档为依据。
+
 ## 示例
 
 [`examples/`](./examples/) 里可直接运行的表单 (每个都带 `.defaults.json`

@@ -166,6 +166,16 @@ without Python: `bash scripts/ask.sh --schema …`.
   a time, every question with a recommended answer, every question grounded in
   the project's docs.
 
+- **Themed to your project** — a plain CSS file overrides the web UI's design
+  tokens (`--color-*`, `--radius-*`, light and dark), passed with `--theme` and
+  served at `/api/v1/theme.css`; a design system maps onto schemaui's tokens
+  with one commented rule each. Fully custom frontends can host their own
+  `index.html` via `--frontend` against the plain REST contract. to whatever
+  grilling skill you already have, and falls back to the bundled
+  [`skills/grill-with-docs`](./skills/grill-with-docs/SKILL.md): one question at
+  a time, every question with a recommended answer, every question grounded in
+  the project's docs.
+
 ## Examples
 
 Runnable forms in [`examples/`](./examples/) (each with recommended answers in
