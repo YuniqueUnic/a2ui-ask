@@ -389,3 +389,7 @@ python3 scripts/ask.py \
   --config examples/web-research-brief.defaults.json \
   --title "联网调研任务确认"
 ```
+
+## License
+
+MIT — see [LICENSE](https://github.com/YuniqueUnic/a2ui-ask/blob/main/LICENSE).
