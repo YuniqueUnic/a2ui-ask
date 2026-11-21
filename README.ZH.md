@@ -136,31 +136,18 @@ python3 scripts/ask.py \
 Windows / PowerShell 7+:`pwsh scripts/ask.ps1 -Schema … -Title …`。没有 Python
 的 macOS/Linux:`bash scripts/ask.sh --schema …`。
 
-## Agent 从 SKILL.md 学到什么
+## Agent 会怎么用它
 
-- **好好提问** —— 先翻代码库再开口;一个决策簇一张表单;每个问题都带推 荐答案
-  (写进 `default`);标题和描述用*你的*语言书写。
-- **处处留逃生口** —— 每个选择都带「其他」选项 + 自由文本补充字段，你不
-  会被迫塞进错误选项;补充框只在你真的选了「其他」之后才出现，长段回答给
-  的是多行输入框而不是单行。
-- **给每个答案配对的控件** —— 滑块、带刻度的滑块、双柄范围、取色器、分段控件、
-  单选组、复选框、条件字段，外加文本、数值、单选/多选、oneOf 组合、嵌套对
-  象、记录列表、键值映射。
-- **能看图就别读字** —— 选项差在「形状」上时（拓扑、发布策略、数据模型）， agent
-  给每个选项配一张图，你认图选择;节点级 `x-content` 用图或一段富文本
-  解释字段背景;`mermaid` 控件让答案本身就是一张可编辑、实时预览的图。
-- **访谈纪律内置** —— 开放式设计需要深度访谈时，skill 优先使用你已安装的
-  grilling 类 skill，都没有时回退到内置的
-  [`skills/grill-with-docs`](./skills/grill-with-docs/SKILL.md)：一次一问、
-  每问带推荐答案、每个问题都以项目文档为依据。
+- 一组相关的决定只开一张表单，推荐答案已经预填，文字用你的语言。
+- 按答案挑控件：滑块、双柄范围、取色器、分段和单选、复选框、条件字段、记录列表、
+  键值映射。
+- 选项差在「形状」上时给每个选项配一张图；答案本身是图时，给你一个可编辑的图。
+- 每个选择都留「其他」和补充框，你不会被迫选错。
+- 表单跑不起来就改用文字提问，不会卡住任务。
 
-- **主题随项目走** —— 一个纯 CSS 文件覆盖 Web UI 的设计 token
-  （`--color-*`、`--radius-*`，亮暗两套），用 `--theme` 传入，引擎在
-  `/api/v1/theme.css` 分层提供服务;外部设计系统按「一条注释一条映射」 翻译成
-  schemaui 的 token。要彻底自定义前端时，可用 `--frontend` 托管 自己的
-  `index.html`，对接纯 REST 契约。 grilling 类 skill，都没有时回退到内置的
-  [`skills/grill-with-docs`](./skills/grill-with-docs/SKILL.md)：一次一问、
-  每问带推荐答案、每个问题都以项目文档为依据。
+给 agent 的规则在 [`SKILL.md`](./SKILL.md)；控件目录在
+[`references/controls.md`](./references/controls.md)；脚本契约、原生命令和主题在
+[`references/engine.md`](./references/engine.md)。
 
 ## 示例
 
@@ -176,20 +163,6 @@ Windows / PowerShell 7+:`pwsh scripts/ask.ps1 -Schema … -Title …`。没有 P
 | [`ecommerce-main-image.schema.json`](./examples/ecommerce-main-image.schema.json)       | 设计：电商主图 —— 尺寸、字号、颜色、渐变背景 (中文) |
 | [`seo-diagnosis.schema.json`](./examples/seo-diagnosis.schema.json)                     | SEO 排查：站点、问题、关键词、竞品 (中文)           |
 | [`deployment-architecture.schema.json`](./examples/deployment-architecture.schema.json) | 架构选型：每个选项自带一张图 (中文，图形界面参考例) |
-
-## 脚本契约
-
-```text
-ask.py --schema PATH|- [--config PATH] [--title T] [--description D]
-       [--topic SLUG] [--output PATH] [--host 0.0.0.0] [--port 8787]
-       [--timeout 300] [--open|--no-open] [--stdout-echo] [--force]
-```
-
-stdout 按序打印 (即时 flush):`SCHEMAUI_URL=…`、`SCHEMAUI_LAN_URL=…`(通
-配绑定时)、`SCHEMAUI_ANSWER=…`,随后是答案 JSON，最后是
-`SCHEMAUI_RESULT=<路径>`。退出码：`0` 成功 · `2` 用法错误 · `3` 找不到 schemaui
-· `4` 超时 · `5` 取消/失败 · `6` 输入非法——agent 在任何非零退
-出时回退纯文本提问。环境变量 `SCHEMAUI_BIN` 可覆盖引擎二进制查找。
 
 ## 开发
 
