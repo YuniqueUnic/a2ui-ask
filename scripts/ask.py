@@ -68,6 +68,9 @@ TIMEOUT_GRACE = 30.0
 WILDCARD_HOSTS = {"0.0.0.0", "::"}
 URL_PARTS = re.compile(r"^(https?://)(\[[0-9a-fA-F:]+\]|[^:/]+)(:\d+)?(/.*)?$")
 URL_IN_TEXT = re.compile(r"https?://[^\s\"'<>]+")
+# The engine's wording for a busy port ("failed to bind web listener",
+# "Address already in use"); Windows and Linux phrase the OS error differently.
+BIND_FAILURE = re.compile(r"failed to bind|address (already )?in use", re.IGNORECASE)
 
 
 def slugify(topic: str) -> str:
@@ -355,7 +358,8 @@ def run_session(
     """Spawn schemaui, relay stderr, announce the URL, block until done.
 
     Returns (exit_code, announced): announced=False means the server never
-    came up (e.g. port busy), so retrying on another port is safe.
+    came up. EXIT_SESSION_FAILED then means a bind failure (retrying on another
+    port is safe); EXIT_BAD_INPUT means the engine rejected the schema/config.
     """
     proc = subprocess.Popen(
         cmd,
@@ -372,6 +376,7 @@ def run_session(
         errors="replace",
     )
     announced = False
+    pre_announce: list[str] = []
     if args.timeout <= 0:
         deadline = None
     elif native_timeout:
@@ -424,6 +429,7 @@ def run_session(
             sys.stderr.write(line)
             sys.stderr.flush()
             if not announced:
+                pre_announce.append(line)
                 url = extract_url(line)
                 if url:
                     announce(url, answer, args.open_browser)
@@ -434,7 +440,16 @@ def run_session(
         proc.wait()
         return EXIT_SESSION_FAILED, announced
     if not announced:
-        return EXIT_SESSION_FAILED, False
+        if BIND_FAILURE.search("".join(pre_announce)):
+            return EXIT_SESSION_FAILED, False
+        # Any other early exit is the engine refusing the input; a retry on
+        # another port would only hit the same error.
+        print(
+            "schemaui rejected the schema or --config (see the error above). "
+            "Fix it and ask again; fall back to plain text only if it cannot be fixed.",
+            file=sys.stderr,
+        )
+        return EXIT_BAD_INPUT, False
     if code == ENGINE_EXIT_TIMEOUT:
         print(
             f"Timed out after {args.timeout}s waiting for the user; "

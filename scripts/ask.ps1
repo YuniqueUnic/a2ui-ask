@@ -226,8 +226,13 @@ function Invoke-SchemauiSession([int]$BindPort) {
   if (-not $url) {
     $proc.WaitForExit()
     Get-Content $errFile -ErrorAction SilentlyContinue | ForEach-Object { [Console]::Error.WriteLine($_) }
+    $bindFailed = Select-String -Path $errFile -Pattern "failed to bind|address (already )?in use" -Quiet -ErrorAction SilentlyContinue
     Remove-Item $errFile -ErrorAction SilentlyContinue
-    return @{ Code = $EXIT_SESSION_FAILED; Announced = $false }
+    if ($bindFailed) { return @{ Code = $EXIT_SESSION_FAILED; Announced = $false } }
+    # Any other early exit is the engine refusing the input; a retry on
+    # another port would only hit the same error.
+    [Console]::Error.WriteLine("schemaui rejected the schema or --config (see the error above). Fix it and ask again; fall back to plain text only if it cannot be fixed.")
+    return @{ Code = $EXIT_BAD_INPUT; Announced = $false }
   }
 
   $localUrl = ConvertTo-LocalUrl $url

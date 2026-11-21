@@ -151,7 +151,8 @@ child_alive() {
 }
 
 # Return codes from run_session: 0 ok | 4 timeout | 5 session failed after
-# announce | 7 server never came up (safe to retry on another port).
+# announce | 7 bind failure before announcing (safe to retry on another port)
+# | 6 engine rejected the schema before announcing (retrying cannot help).
 run_session() {
   local port="$1" err_log child url local_url fired watchdog code
   err_log="$(mktemp -t a2ui-ask.XXXXXX)"
@@ -194,8 +195,15 @@ run_session() {
 
   if [ -z "$url" ]; then
     wait "$child" 2>/dev/null || true
+    # `tee` may still be flushing after the engine exits; give it a moment.
+    sleep 0.2
+    if grep -qiE 'failed to bind|address (already )?in use' "$err_log" 2>/dev/null; then
+      rm -f "$err_log"
+      return 7
+    fi
     rm -f "$err_log"
-    return 7
+    echo "schemaui rejected the schema or --config (see the error above). Fix it and ask again; fall back to plain text only if it cannot be fixed." >&2
+    return 6
   fi
 
   local_url="$(localize_url "$url")"
