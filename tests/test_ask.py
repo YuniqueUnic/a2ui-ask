@@ -14,6 +14,7 @@ import argparse
 import json
 import os
 import shutil
+import socket
 import subprocess
 import sys
 import threading
@@ -833,6 +834,57 @@ def test_missing_binary_exits_3(tmp_path: Path, monkeypatch: pytest.MonkeyPatch)
     )
     assert result.returncode == ask.EXIT_NO_BINARY
     assert "not found" in result.stderr
+
+
+@needs_binary
+@pytest.mark.parametrize("launcher", LAUNCHERS)
+def test_rejected_schema_exits_6_without_port_retry(tmp_path: Path, launcher: list[str]):
+    # The engine refuses this at load time, before announcing a URL. That is a
+    # schema problem to fix, not a busy port: no retry, and exit 6 (not 5).
+    bad = tmp_path / "bad.json"
+    bad.write_text(
+        json.dumps(
+            {
+                "type": "object",
+                "properties": {"name": {"type": "string", "x-control": "slider"}},
+            }
+        )
+    )
+    result = subprocess.run(
+        [*launcher, "--schema", str(bad), "--no-open", "--timeout", "3"],
+        cwd=tmp_path,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        timeout=30,
+    )
+    assert result.returncode == ask.EXIT_BAD_INPUT, result.stderr
+    assert "retrying with a random free port" not in result.stderr + result.stdout
+    assert "rejected the schema or --config" in result.stderr
+    assert "SCHEMAUI_URL=" not in result.stdout
+    assert not list(tmp_path.glob(".schemaui/answers/*.json"))
+
+
+@needs_binary
+@pytest.mark.parametrize("launcher", LAUNCHERS)
+def test_busy_port_retries_on_a_random_port(tmp_path: Path, launcher: list[str]):
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as held:
+        held.bind(("0.0.0.0", 0))
+        held.listen()
+        port = held.getsockname()[1]
+        result = subprocess.run(
+            [*launcher, "--schema", str(EXAMPLE_SCHEMA), "--port", str(port)]
+            + ["--no-open", "--timeout", "2"],
+            cwd=tmp_path,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            timeout=60,
+        )
+    # Retried, came up on another port, then the session timed out (4).
+    assert "retrying with a random free port" in result.stderr + result.stdout
+    assert "SCHEMAUI_URL=" in result.stdout
+    assert result.returncode == ask.EXIT_TIMEOUT, result.stderr
 
 
 def test_missing_schema_exits_6(tmp_path: Path):
