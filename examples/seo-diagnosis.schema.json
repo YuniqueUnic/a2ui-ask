@@ -3,7 +3,20 @@
   "title": "网站 SEO 问题排查",
   "description": "SEO 场景示例:Agent 在给出诊断方案前需要先摸清站点现状。问题描述越具体,诊断越准;选项覆盖不到的情况选「其他」,对应的自定义输入框才会出现。",
   "type": "object",
-  "required": ["site_url", "site_type", "main_issues", "search_engines"],
+  "required": [
+    "site_url",
+    "site_type",
+    "main_issues",
+    "search_engines",
+    "target_keywords",
+    "target_market",
+    "recent_changes",
+    "daily_uv",
+    "has_search_console",
+    "competitors",
+    "tech_stack",
+    "goal"
+  ],
   "properties": {
     "site_url": {
       "type": "string",
@@ -71,7 +84,10 @@
       "type": "array",
       "title": "目标关键词",
       "description": "列表:每条一个核心词,最多 10 个;诊断会逐个检查排名与落地页。",
-      "items": { "type": "string", "minLength": 1 },
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
       "maxItems": 10,
       "default": ["JSON Schema 表单", "AI 表单生成"]
     },
@@ -108,6 +124,7 @@
       "type": "object",
       "title": "近期改动",
       "description": "嵌套:改版、迁移、换域名是排名波动最常见的诱因。",
+      "required": ["has_changes"],
       "properties": {
         "has_changes": {
           "type": "boolean",
@@ -144,7 +161,10 @@
       "type": "array",
       "title": "主要竞争对手",
       "description": "列表:每条一个域名;用于对比内容差距与外链差距。",
-      "items": { "type": "string", "pattern": "^[a-z0-9.-]+\\.[a-z]{2,}$" },
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z0-9.-]+\\.[a-z]{2,}$"
+      },
       "maxItems": 5,
       "default": ["competitor-a.com"]
     },

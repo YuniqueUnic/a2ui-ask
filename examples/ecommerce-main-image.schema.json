@@ -8,7 +8,14 @@
     "image_size",
     "headline",
     "headline_font_size",
-    "headline_color"
+    "headline_color",
+    "custom_width",
+    "custom_height",
+    "font_family",
+    "promo_badge",
+    "batch_count",
+    "output_formats",
+    "brand_assets"
   ],
   "properties": {
     "platforms": {
@@ -119,7 +126,10 @@
           "title": "纯色背景",
           "type": "object",
           "properties": {
-            "kind": { "type": "string", "const": "纯色" },
+            "kind": {
+              "type": "string",
+              "const": "纯色"
+            },
             "color": {
               "type": "string",
               "title": "背景色值",
@@ -133,7 +143,10 @@
           "title": "渐变背景",
           "type": "object",
           "properties": {
-            "kind": { "type": "string", "const": "渐变" },
+            "kind": {
+              "type": "string",
+              "const": "渐变"
+            },
             "color_from": {
               "type": "string",
               "title": "起始色",
@@ -154,13 +167,16 @@
               "default": 135
             }
           },
-          "required": ["kind", "color_from", "color_to"]
+          "required": ["kind", "color_from", "color_to", "angle"]
         },
         {
           "title": "场景图背景",
           "type": "object",
           "properties": {
-            "kind": { "type": "string", "const": "场景图" },
+            "kind": {
+              "type": "string",
+              "const": "场景图"
+            },
             "scene_prompt": {
               "type": "string",
               "title": "场景描述",
@@ -176,6 +192,7 @@
       "type": "object",
       "title": "促销标签",
       "description": "嵌套配置:是否加角标,以及角标文案与颜色。",
+      "required": ["enabled", "text", "color"],
       "properties": {
         "enabled": {
           "type": "boolean",
@@ -217,7 +234,10 @@
       "type": "array",
       "title": "输出格式",
       "description": "多选:JPG 体积小,PNG 支持透明,WebP 兼顾两者。",
-      "items": { "type": "string", "enum": ["JPG", "PNG", "WebP"] },
+      "items": {
+        "type": "string",
+        "enum": ["JPG", "PNG", "WebP"]
+      },
       "uniqueItems": true,
       "minItems": 1,
       "default": ["JPG", "WebP"]
@@ -226,8 +246,13 @@
       "type": "object",
       "title": "品牌元素",
       "description": "键值对:例如 logo位置=右上角、水印=无。",
-      "additionalProperties": { "type": "string" },
-      "default": { "logo位置": "右上角", "水印": "无" }
+      "additionalProperties": {
+        "type": "string"
+      },
+      "default": {
+        "logo位置": "右上角",
+        "水印": "无"
+      }
     }
   }
 }

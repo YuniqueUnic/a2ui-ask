@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "Deployment Environment",
   "type": "object",
-  "required": ["environment", "replicas"],
+  "required": ["environment", "replicas", "enable_tls", "runtime"],
   "properties": {
     "environment": {
       "type": "string",
@@ -28,6 +28,7 @@
     "runtime": {
       "type": "object",
       "title": "Runtime",
+      "required": ["host", "port"],
       "properties": {
         "host": {
           "type": "string",
