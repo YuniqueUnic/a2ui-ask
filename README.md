@@ -117,12 +117,25 @@ git clone https://github.com/YuniqueUnic/a2ui-ask.git ~/.claude/skills/a2ui-ask
 git clone https://github.com/YuniqueUnic/a2ui-ask.git .claude/skills/a2ui-ask
 ```
 
+**Option 4 — npm**
+
+The [npm package](https://www.npmjs.com/package/a2ui-ask) ships the same skill
+files. Install it globally and link it into your skills directory; after that,
+`npm update -g a2ui-ask` upgrades the skill in place:
+
+```bash
+npm install -g a2ui-ask
+mkdir -p ~/.claude/skills
+ln -s "$(npm root -g)/a2ui-ask" ~/.claude/skills/a2ui-ask
+```
+
 Codex / zcode users: paste the ready-made block from
 [`prompts/ask.prompt.md`](./prompts/ask.prompt.md) into your `AGENTS.md`.
 
 ## 5-minute quickstart
 
-From a clone of this repo, with `schemaui` on your PATH:
+From the skill directory (a clone or the npm package), with `schemaui` on your
+PATH:
 
 ```bash
 python3 scripts/ask.py \
@@ -185,6 +198,7 @@ SCHEMAUI_BIN=$(command -v schemaui) python3 -m pytest tests/
 
 ## Links
 
+- [npm package](https://www.npmjs.com/package/a2ui-ask)
 - [linux.do](https://linux.do)
 
 ## License

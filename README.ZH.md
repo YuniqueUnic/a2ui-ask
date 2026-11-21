@@ -112,12 +112,23 @@ git clone https://github.com/YuniqueUnic/a2ui-ask.git ~/.claude/skills/a2ui-ask
 git clone https://github.com/YuniqueUnic/a2ui-ask.git .claude/skills/a2ui-ask
 ```
 
+**方式四：npm**
+
+[npm 包](https://www.npmjs.com/package/a2ui-ask)里是同一套 skill
+文件。全局安装后链接进 skills 目录，之后 `npm update -g a2ui-ask` 就能原地升级：
+
+```bash
+npm install -g a2ui-ask
+mkdir -p ~/.claude/skills
+ln -s "$(npm root -g)/a2ui-ask" ~/.claude/skills/a2ui-ask
+```
+
 Codex / zcode 用户：把 [`prompts/ask.prompt.md`](./prompts/ask.prompt.md)
 里现成的约定块粘贴到你的 `AGENTS.md`。
 
 ## 5 分钟快速上手
 
-在本仓库的 clone 里、且 `schemaui` 已在 PATH 上：
+在 skill 目录里 (clone 下来的仓库或 npm 包均可)、且 `schemaui` 已在 PATH 上：
 
 ```bash
 python3 scripts/ask.py \
@@ -174,6 +185,7 @@ SCHEMAUI_BIN=$(command -v schemaui) python3 -m pytest tests/
 
 ## 链接
 
+- [npm 包](https://www.npmjs.com/package/a2ui-ask)
 - [linux.do](https://linux.do)
 
 ## 许可证
