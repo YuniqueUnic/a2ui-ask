@@ -20,6 +20,6 @@
   ],
   "labels": {
     "team": "growth",
-    "cost-center": "eng"
+    "cost_center": "eng"
   }
 }

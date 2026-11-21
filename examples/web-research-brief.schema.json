@@ -3,7 +3,41 @@
   "title": "联网调研任务确认",
   "description": "调研场景示例:Agent 接到「上网调研最近的某个热点」这类任务时,先把调研口径一次性问清楚再动手。每个问题都带推荐默认值;选项覆盖不到时选「其他」,对应的自定义输入框才会出现。本示例刻意用上了控件画廊里的全部控件——文本、多行、普通数字、滑块(整数/步进/小数/带刻度/百分比)、双柄范围、下拉、分段、单选组、开关、复选框、取色器、条件字段——可以当作写表单时的对照参照。",
   "type": "object",
-  "required": ["topic", "goal", "publish_age_days", "source_types", "delivery"],
+  "required": [
+    "topic",
+    "goal",
+    "publish_age_days",
+    "source_types",
+    "delivery",
+    "focus_terms",
+    "background",
+    "expected_words",
+    "max_sources",
+    "time_budget_minutes",
+    "focus_items",
+    "fetch_timeout_seconds",
+    "relevance_floor",
+    "dedup_similarity",
+    "depth_level",
+    "source_authority",
+    "freshness_weight",
+    "price_range",
+    "confidence_band",
+    "market",
+    "report_language",
+    "report_style",
+    "urgency",
+    "include_charts",
+    "include_competitor_pricing",
+    "accent_color",
+    "brand_hex",
+    "run_mode",
+    "track_window",
+    "track_sample_percent",
+    "watchlist",
+    "labels",
+    "report_flow"
+  ],
   "properties": {
     "topic": {
       "type": "string",
@@ -116,9 +150,18 @@
       "maximum": 5,
       "x-control": "slider",
       "x-slider-marks": [
-        { "value": 1, "label": "只看体验" },
-        { "value": 3, "label": "均衡" },
-        { "value": 5, "label": "只看权威" }
+        {
+          "value": 1,
+          "label": "只看体验"
+        },
+        {
+          "value": 3,
+          "label": "均衡"
+        },
+        {
+          "value": 5,
+          "label": "只看权威"
+        }
       ],
       "default": 3
     },
@@ -131,9 +174,18 @@
       "multipleOf": 5,
       "x-control": "slider",
       "x-slider-marks": [
-        { "value": 0, "label": "0%" },
-        { "value": 50, "label": "50%" },
-        { "value": 100, "label": "100%" }
+        {
+          "value": 0,
+          "label": "0%"
+        },
+        {
+          "value": 50,
+          "label": "50%"
+        },
+        {
+          "value": 100,
+          "label": "100%"
+        }
       ],
       "default": 60
     },
@@ -141,7 +193,11 @@
       "type": "array",
       "title": "内容发布时间范围(距今天数)",
       "description": "两个手柄:左端是最近多少天以内,右端是最多回溯多少天;默认就是「最近 1 周到 3 个月」。",
-      "items": { "type": "integer", "minimum": 1, "maximum": 365 },
+      "items": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 365
+      },
       "minItems": 2,
       "maxItems": 2,
       "minimum": 1,
@@ -153,7 +209,11 @@
       "type": "array",
       "title": "关注价格区间(元)",
       "description": "只保留落在区间内的车型;按 1 万元为一档。",
-      "items": { "type": "integer", "minimum": 0, "maximum": 600000 },
+      "items": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 600000
+      },
       "minItems": 2,
       "maxItems": 2,
       "minimum": 0,
@@ -161,10 +221,22 @@
       "multipleOf": 10000,
       "x-control": "range",
       "x-slider-marks": [
-        { "value": 0, "label": "0" },
-        { "value": 200000, "label": "20 万" },
-        { "value": 400000, "label": "40 万" },
-        { "value": 600000, "label": "60 万" }
+        {
+          "value": 0,
+          "label": "0"
+        },
+        {
+          "value": 200000,
+          "label": "20 万"
+        },
+        {
+          "value": 400000,
+          "label": "40 万"
+        },
+        {
+          "value": 600000,
+          "label": "60 万"
+        }
       ],
       "default": [150000, 350000]
     },
@@ -172,7 +244,11 @@
       "type": "array",
       "title": "结论置信区间",
       "description": "小数区间:只保留落在这个置信度范围内的结论,过于确定或过于含糊的都不写进报告。",
-      "items": { "type": "number", "minimum": 0, "maximum": 1 },
+      "items": {
+        "type": "number",
+        "minimum": 0,
+        "maximum": 1
+      },
       "minItems": 2,
       "maxItems": 2,
       "minimum": 0,
@@ -200,7 +276,11 @@
       "type": "string",
       "title": "目标市场 · 自定义说明",
       "description": "上一题选了「其他」时填写,例如「拉美」。",
-      "x-visible-when": { "field": "market", "op": "equals", "value": "其他" }
+      "x-visible-when": {
+        "field": "market",
+        "op": "equals",
+        "value": "其他"
+      }
     },
     "report_language": {
       "type": "string",
@@ -280,7 +360,11 @@
       "type": "array",
       "title": "每日跟踪时段",
       "description": "只在定时跟踪时出现:每天在这个时间段内抓取并比对变化。",
-      "items": { "type": "integer", "minimum": 0, "maximum": 24 },
+      "items": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 24
+      },
       "minItems": 2,
       "maxItems": 2,
       "minimum": 0,
@@ -302,8 +386,14 @@
       "multipleOf": 5,
       "x-control": "slider",
       "x-slider-marks": [
-        { "value": 0, "label": "0%" },
-        { "value": 100, "label": "100%" }
+        {
+          "value": 0,
+          "label": "0%"
+        },
+        {
+          "value": 100,
+          "label": "100%"
+        }
       ],
       "x-visible-when": {
         "field": "run_mode",
@@ -350,40 +440,49 @@
           "title": "单文件 HTML 报告",
           "type": "object",
           "properties": {
-            "kind": { "type": "string", "const": "html" },
+            "kind": {
+              "type": "string",
+              "const": "html"
+            },
             "open_after_done": {
               "type": "boolean",
               "title": "完成后自动打开",
               "default": true
             }
           },
-          "required": ["kind"]
+          "required": ["kind", "open_after_done"]
         },
         {
           "title": "Markdown 报告",
           "type": "object",
           "properties": {
-            "kind": { "type": "string", "const": "markdown" },
+            "kind": {
+              "type": "string",
+              "const": "markdown"
+            },
             "include_toc": {
               "type": "boolean",
               "title": "含目录",
               "default": true
             }
           },
-          "required": ["kind"]
+          "required": ["kind", "include_toc"]
         },
         {
           "title": "在线文档",
           "type": "object",
           "properties": {
-            "kind": { "type": "string", "const": "doc" },
+            "kind": {
+              "type": "string",
+              "const": "doc"
+            },
             "doc_title": {
               "type": "string",
               "title": "文档标题",
               "default": "最近新能源车调研"
             }
           },
-          "required": ["kind"]
+          "required": ["kind", "doc_title"]
         }
       ]
     },
@@ -423,15 +522,24 @@
         "required": ["name", "kind"]
       },
       "default": [
-        { "name": "比亚迪", "kind": "品牌", "url": "https://www.byd.com" }
+        {
+          "name": "比亚迪",
+          "kind": "品牌",
+          "url": "https://www.byd.com"
+        }
       ]
     },
     "labels": {
       "type": "object",
       "title": "自定义标签",
       "description": "键值对:方便把这次调研归档和检索,例如 项目=2026 选型。",
-      "additionalProperties": { "type": "string" },
-      "default": { "项目": "2026 选型", "负责人": "产品组" }
+      "additionalProperties": {
+        "type": "string"
+      },
+      "default": {
+        "项目": "2026 选型",
+        "负责人": "产品组"
+      }
     },
     "report_flow": {
       "type": "string",

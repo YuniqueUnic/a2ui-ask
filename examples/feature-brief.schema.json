@@ -7,7 +7,15 @@
     "feature_name",
     "target_release",
     "platforms",
-    "storage"
+    "storage",
+    "one_liner",
+    "expected_daily_users",
+    "breaking_change",
+    "owner_email",
+    "cache",
+    "endpoints",
+    "labels",
+    "rollout"
   ],
   "properties": {
     "feature_name": {
@@ -28,12 +36,7 @@
       "type": "string",
       "title": "Target release",
       "description": "Single-select: which train should this ship on?",
-      "enum": [
-        "next-minor",
-        "next-major",
-        "patch",
-        "unscheduled"
-      ],
+      "enum": ["next-minor", "next-major", "patch", "unscheduled"],
       "default": "next-minor"
     },
     "platforms": {
@@ -42,22 +45,11 @@
       "description": "Multi-select: every surface that must ship this feature.",
       "items": {
         "type": "string",
-        "enum": [
-          "macos",
-          "linux",
-          "windows",
-          "web",
-          "ios",
-          "android"
-        ]
+        "enum": ["macos", "linux", "windows", "web", "ios", "android"]
       },
       "uniqueItems": true,
       "minItems": 1,
-      "default": [
-        "macos",
-        "linux",
-        "windows"
-      ]
+      "default": ["macos", "linux", "windows"]
     },
     "expected_daily_users": {
       "type": "integer",
@@ -114,10 +106,7 @@
               "default": 10
             }
           },
-          "required": [
-            "kind",
-            "connection_string"
-          ]
+          "required": ["kind", "connection_string", "pool_size"]
         },
         {
           "title": "SQLite",
@@ -132,9 +121,7 @@
               "default": "./data/app.db"
             }
           },
-          "required": [
-            "kind"
-          ]
+          "required": ["kind", "file_path"]
         },
         {
           "title": "In-memory (ephemeral)",
@@ -150,9 +137,7 @@
               "default": 10000
             }
           },
-          "required": [
-            "kind"
-          ]
+          "required": ["kind", "max_entries"]
         }
       ]
     },
@@ -160,6 +145,7 @@
       "type": "object",
       "title": "Cache",
       "description": "Nested section: collapses into its own tab group. Turning it off hides the settings it owns.",
+      "required": ["enabled", "backend", "ttl_seconds"],
       "properties": {
         "enabled": {
           "type": "boolean",
@@ -167,10 +153,7 @@
         },
         "backend": {
           "type": "string",
-          "enum": [
-            "memory",
-            "redis"
-          ],
+          "enum": ["memory", "redis"],
           "default": "memory",
           "x-visible-when": {
             "field": "enabled",
@@ -200,12 +183,7 @@
         "properties": {
           "method": {
             "type": "string",
-            "enum": [
-              "GET",
-              "POST",
-              "PUT",
-              "DELETE"
-            ],
+            "enum": ["GET", "POST", "PUT", "DELETE"],
             "default": "POST"
           },
           "path": {
@@ -218,10 +196,7 @@
             "default": true
           }
         },
-        "required": [
-          "method",
-          "path"
-        ]
+        "required": ["method", "path"]
       },
       "default": [
         {
@@ -243,7 +218,7 @@
       },
       "default": {
         "team": "growth",
-        "cost-center": "eng"
+        "cost_center": "eng"
       }
     },
     "rollout": {
@@ -295,10 +270,7 @@
           "maxItems": 2,
           "minimum": 0,
           "maximum": 24,
-          "default": [
-            9,
-            17
-          ],
+          "default": [9, 17],
           "x-control": "range"
         },
         "accent_color": {
@@ -310,7 +282,10 @@
         }
       },
       "required": [
-        "rollout_percent"
+        "rollout_percent",
+        "confidence",
+        "business_hours",
+        "accent_color"
       ]
     }
   }

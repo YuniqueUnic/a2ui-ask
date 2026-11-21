@@ -7,7 +7,15 @@
     "expense_type",
     "invoice_count",
     "total_amount",
-    "invoice_title"
+    "invoice_title",
+    "currency",
+    "invoice_date",
+    "is_electronic",
+    "tax_number",
+    "project_code",
+    "urgent",
+    "attachments",
+    "labels"
   ],
   "properties": {
     "expense_type": {
@@ -53,7 +61,11 @@
       "type": "string",
       "title": "币种 · 自定义说明",
       "description": "币种选了「其他」时填写,例如「港币 HKD」。",
-      "x-visible-when": { "field": "currency", "op": "equals", "value": "其他" }
+      "x-visible-when": {
+        "field": "currency",
+        "op": "equals",
+        "value": "其他"
+      }
     },
     "invoice_date": {
       "type": "string",
@@ -135,16 +147,27 @@
         "required": ["kind", "filename"]
       },
       "default": [
-        { "kind": "发票", "filename": "invoice-001.pdf" },
-        { "kind": "支付记录", "filename": "payment.png" }
+        {
+          "kind": "发票",
+          "filename": "invoice-001.pdf"
+        },
+        {
+          "kind": "支付记录",
+          "filename": "payment.png"
+        }
       ]
     },
     "labels": {
       "type": "object",
       "title": "自定义标签",
       "description": "键值对,方便财务按维度统计,例如 季度=Q3。",
-      "additionalProperties": { "type": "string" },
-      "default": { "季度": "Q3", "部门": "研发" }
+      "additionalProperties": {
+        "type": "string"
+      },
+      "default": {
+        "季度": "Q3",
+        "部门": "研发"
+      }
     }
   }
 }
