@@ -142,39 +142,23 @@ needs a decision — you get a form instead of an interrogation.
 Windows / PowerShell 7+: `pwsh scripts/ask.ps1 -Schema … -Title …`. macOS/Linux
 without Python: `bash scripts/ask.sh --schema …`.
 
-## What the agent learns from SKILL.md
+## What your agent does with it
 
-- **Ask well** — explore the codebase before asking; one form per decision
-  cluster; every question carries a recommended answer as its `default`;
-  titles/descriptions written in _your_ language.
-- **Escape hatches everywhere** — every select offers `其他`/`other` plus a
-  free-text companion field, so you're never forced into a wrong option. The
-  companion only appears once you actually pick the escape option, and
-  paragraph-length answers get a multi-line box instead of a one-line input.
-- **The right control for each answer** — sliders, marked sliders, two-handle
-  ranges, colour pickers, segmented controls, radio groups, checkboxes, and
-  conditional fields, alongside text, number, single/multi select, oneOf
-  compositions, nested objects, record lists, and key/value maps.
-- **Show, don't tell** — when options differ in _shape_ (topologies, rollout
-  strategies, data models), the agent attaches a diagram to each option and lets
-  you pick by recognising the picture; node-level `x-content` explains a field
-  with a figure or prose; a `mermaid` control makes the answer itself an
-  editable, live-previewed diagram.
-- **Interview discipline built in** — for open-ended designs, the skill defers
-  to whatever grilling skill you already have, and falls back to the bundled
-  [`skills/grill-with-docs`](./skills/grill-with-docs/SKILL.md): one question at
-  a time, every question with a recommended answer, every question grounded in
-  the project's docs.
+- Asks one form per cluster of decisions, with its recommended answer already
+  filled in and written in your language.
+- Picks the control the answer deserves: sliders, two-handle ranges, colour
+  pickers, segmented and radio choices, checkboxes, conditional fields, record
+  lists and key/value maps.
+- Puts a diagram on each option when the options differ in shape, and lets you
+  edit an answer that is itself a diagram.
+- Always leaves an `other` option with a free-text box, so you are never forced
+  into a wrong choice.
+- Falls back to plain-text questions when the form cannot run, and never stalls
+  the task.
 
-- **Themed to your project** — a plain CSS file overrides the web UI's design
-  tokens (`--color-*`, `--radius-*`, light and dark), passed with `--theme` and
-  served at `/api/v1/theme.css`; a design system maps onto schemaui's tokens
-  with one commented rule each. Fully custom frontends can host their own
-  `index.html` via `--frontend` against the plain REST contract. to whatever
-  grilling skill you already have, and falls back to the bundled
-  [`skills/grill-with-docs`](./skills/grill-with-docs/SKILL.md): one question at
-  a time, every question with a recommended answer, every question grounded in
-  the project's docs.
+The agent-facing rules live in [`SKILL.md`](./SKILL.md); the control catalogue
+in [`references/controls.md`](./references/controls.md); the script contract,
+raw CLI and theming in [`references/engine.md`](./references/engine.md).
 
 ## Examples
 
@@ -190,20 +174,6 @@ the matching `.defaults.json`):
 | [`ecommerce-main-image.schema.json`](./examples/ecommerce-main-image.schema.json)       | design: e-commerce hero images — sizes, fonts, colors, backgrounds (中文)          |
 | [`seo-diagnosis.schema.json`](./examples/seo-diagnosis.schema.json)                     | SEO triage: site, issues, keywords, competitors (中文)                             |
 | [`deployment-architecture.schema.json`](./examples/deployment-architecture.schema.json) | architecture choice: every option carries a diagram (中文 — the figures reference) |
-
-## Script contract
-
-```text
-ask.py --schema PATH|- [--config PATH] [--title T] [--description D]
-       [--topic SLUG] [--output PATH] [--host 0.0.0.0] [--port 8787]
-       [--timeout 300] [--open|--no-open] [--stdout-echo] [--force]
-```
-
-Stdout (flushed, in order): `SCHEMAUI_URL=…`, `SCHEMAUI_LAN_URL=…` (wildcard
-binds), `SCHEMAUI_ANSWER=…`, then the answer JSON, finally
-`SCHEMAUI_RESULT=<path>`. Exit codes: `0` ok · `2` usage · `3` schemaui missing
-· `4` timeout · `5` cancelled/failed · `6` bad input — agents fall back to plain
-text on any non-zero exit. `SCHEMAUI_BIN` overrides the engine binary lookup.
 
 ## Development
 
