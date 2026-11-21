@@ -1,203 +1,32 @@
 # a2ui-ask
 
-When you need the user to choose among options or fill in structured config, do
-NOT ask in plain text. Spawn a schemaui Web form and write the result to a file.
+Paste this block into `AGENTS.md` (Codex, zcode) or any agent that does not load
+skills. The full guide is `SKILL.md` in the a2ui-ask checkout
+(https://github.com/YuniqueUnic/a2ui-ask/blob/main/SKILL.md); read it before the
+first form.
 
-## Critical constraints
+When the user must pick among options or fill in structured config, ask through
+a browser form, not chat:
 
-- NEVER use TUI mode. Your process is not attached to the user's terminal; a TUI
-  renders nowhere and blocks forever.
-- ALWAYS use Web mode with `--host 0.0.0.0` so the form is reachable from
-  localhost, LAN, SSH tunnels, and port-forwards.
-- ALWAYS write output to a FILE under `.schemaui/answers/`, not just stdout.
-  Files are reviewable by you and the user later.
-- ALWAYS tell the user the URL and the answer file path in your response text,
-  BEFORE or IN THE SAME TURN as the tool call.
-- `-o` is greedy: it swallows every following token. Put every other flag BEFORE
-  `-o`, and pass extra destinations space-separated in the same `-o`
-  (`-o answer.json -`). Never repeat `-o`.
-
-## Ask well (grill-me discipline, form edition)
-
-- If the codebase, git history, or `.schemaui/answers/` can answer the question,
-  answer it yourself — the form is for decisions only the user can make.
-- Batch one decision cluster per form; never spawn ten forms for ten questions,
-  and never interrogate serially in chat.
-- Put your recommended answer in each field's `default` so the user confirms
-  with one click; say what you recommended and why in chat.
-- Leave an escape hatch on every select: an `其他`/`other` option plus a sibling
-  `<field>_custom` input gated by `x-visible-when`, so it appears only once the
-  user picks it (`"op": "contains"` for a multi-select). Mark long-form answers
-  `x-multiline` so they get a text area instead of a one-line input.
-- Use the control the answer deserves — a form of plain text boxes makes the
-  user translate in their head. `"slider"` for a number the user drags along a
-  scale (needs `minimum` / `maximum`), `"range"` for a two-number window,
-  `"color"` for colours, `"segmented"` for 2–4 very short options, `"radio"`
-  when option labels need a full line each, `"checkbox"` for a boolean that
-  reads as part of a set, `x-visible-when` for anything that only matters
-  sometimes. Don't make every field a special case either — a hint earns its
-  place when it removes typing or removes a wrong answer.
-- Question-type cheat sheet (single/multi select, oneOf composition, key/value
-  maps, sliders, ranges, colour pickers, …): see `SKILL.md`. The worked
-  reference for the whole control gallery is
-  `examples/web-research-brief.schema.json` (中文, every control); the
-  12-question English showcase is `examples/feature-brief.schema.json`.
-
-## Preferred path: the helper script
-
-This skill ships `scripts/ask.py` (plus `ask.sh` and `ask.ps1` twins for
-shell-only and Windows/PowerShell environments) which handles binding, browser
-wakeup, URL printing, timeout, and the file contract for you:
-
-```bash
-python3 scripts/ask.py \
-  --schema .schemaui/schemas/<topic>-<timestamp>.json \
-  --config .schemaui/schemas/<topic>-defaults.json \
-  --title "<short question summary>" \
-  --description "<one-line context>" \
-  --timeout 300
-```
-
-The script prints `SCHEMAUI_URL=…`, `SCHEMAUI_LAN_URL=…` (wildcard binds), and
-`SCHEMAUI_ANSWER=…` on stdout, opens the user's browser (pass `--no-open` on
-remote/headless runs), blocks until Save & Exit, then prints the answer JSON.
-Exit codes: `0` ok · `3` schemaui missing · `4` timeout · `5` cancelled/failed ·
-`6` bad input. Any non-zero exit → fall back to plain text and say so.
-
-You can also pipe the schema in instead of writing it first; the script persists
-it under `.schemaui/schemas/` for the audit trail:
-
-```bash
-cat schema.json | python3 scripts/ask.py \
-  --schema - --topic deploy-config --title "Deployment Config"
-```
-
-## Manual path: raw CLI
-
-1. Generate a draft-07 JSON Schema for your question:
-   - top-level `type: object`
-   - each field: `title`, `description`, `default`
-   - enums via `"enum": [...]`, numeric bounds via `minimum` / `maximum`
-   - nesting via nested `properties`
-
-2. Save both schema and answer under a shared `<topic>-<YYYYMMDD-HHMMSS>` name:
-
-   ```bash
-   mkdir -p .schemaui/schemas .schemaui/answers
-   # .schemaui/schemas/deploy-config-20260916-101500.json
-   # .schemaui/answers/deploy-config-20260916-101500.json
-   ```
-
-3. Decide whether to add stdout echo (add `-` as a second `-o` destination):
-   - add it if your runtime shows tool output to the user in real time AND the
-     JSON is small (< 50 lines)
-   - skip it if output is buffered, the JSON is large, or you are in a pipeline
-   - default when unsure: file-only (safer)
-
-4. Tell the user in your response text: "I've prepared a form at
-   http://\<host\>:8787 — please open it in your browser. I'll wait. Your
-   answers will be saved to `.schemaui/answers/<file>.json`." Use `localhost`
-   when you run on the user's machine, otherwise your LAN IP or hostname. Name
-   the deadline too — the form shows a live countdown, but the user has not
-   opened it yet when they read your message.
-
-5. Run the blocking command (all flags before `-o`):
-
-   ```bash
-   schemaui web \
-     --host 0.0.0.0 --port 8787 \
-     --schema .schemaui/schemas/<topic>-<timestamp>.json \
-     --config .schemaui/schemas/<topic>-defaults.json \
-     --title "<short question summary>" \
-     --description "<one-line context>" \
-     --timeout 300 \
-     --force \
-     -o .schemaui/answers/<topic>-<timestamp>.json
-   ```
-
-   Optional stdout echo: append `-` after the answer path
-   (`-o .schemaui/answers/<file>.json -`).
-
-   The server announces `<title> schemaui UI available at http://<addr>/` on
-   stderr, followed by `Session closes automatically in <budget>` whenever
-   `--timeout` was given — that line is how you learn the deadline without
-   parsing the UI. If port 8787 is busy the command fails fast; retry once with
-   `--port 0`, parse the `http://…` line from stderr, and relay that URL.
-
-6. On exit 0, read the answer file and continue the original task, citing field
-   paths: "Per your selection
-   (`.schemaui/answers/deploy-config-20260916-101500.json`):
-   `runtime.port = 8080`".
-
-7. Do NOT delete schema or answer files — they are the audit trail. Add
-   `.schemaui/` to `.gitignore` unless answers should be committed.
-
-## Timeout
-
-Pass `--timeout SECONDS` and let the engine own the deadline: it renders a live
-countdown in the form and closes the session itself, so the user is never
-surprised. `0` means no deadline.
-
-The script hands `--timeout` straight through when the installed engine
-understands it (it probes `--help` once), and otherwise falls back to killing
-the process after the same interval — so the flag behaves the same either way,
-but only a capable engine can warn the user first.
-
-On timeout: exit code is `4`, nothing was written, fall back to text questions,
-and tell the user the form closed itself. Only kill the process yourself if the
-engine fails to exit — the script already allows a 30s grace for that.
-
-## Fallback (never hard-fail)
-
-Switch to plain-text questioning AND tell the user you fell back when any of
-these happen: schemaui binary not found, schema validation fails, non-zero exit
-/ user cancelled, timeout.
-
-A missing binary earns one attempt first: `scripts/install.sh` / `install.ps1`
-run unattended and need no toolchain. Add `--source gitee` / `-Source gitee`
-when github.com is unreachable — the common case in mainland China, where the
-Gitee mirror is the only working source. Fall back only if the install itself
-fails.
-
-## Sensitive input
-
-For secrets (tokens, passwords) use `--host 127.0.0.1` instead, and tell remote
-users to tunnel first: `ssh -L 8787:localhost:8787 <host>`.
-
-## Past answers
-
-Before asking, check `.schemaui/answers/` — the user may have already answered
-something similar. Reuse a prior answer as defaults via `--config`.
-
-## Show, don't tell (figures)
-
-- Options that differ in _shape_ (topologies, rollouts, data models) get a
-  diagram each:
-  `"x-options": [{"label": …, "description": …, "content":
-  {"type": "mermaid", "source": "flowchart …"}}, …]`
-  — aligned with `enum` by index; use `radio`/`select` (segmented cannot show
-  figures).
-- A question that needs a picture to make sense carries
-  `"x-content": {"type": "mermaid"|"svg"|"markdown", "source": …}` — rendered
-  above the control.
-- Only when the answer _is_ a diagram: `"x-control": "mermaid"` edits the source
-  with a live preview. A figure explains; it is never the value.
-- Reference: `examples/deployment-architecture.schema.json` (every option with a
-  diagram) and `schemaui ≥ 0.16` for the figure surfaces.
-
-## Theme customization
-
-- When the user wants the form to match their project's design system, write a
-  small CSS file overriding the web UI's design tokens — `--color-primary`,
-  `--color-background`, `--color-ring`, `--radius-*`, plus a `.dark { … }` block
-  for dark mode — and pass it with `--theme PATH`. It is served at
-  `/api/v1/theme.css` and layered over the built-in stylesheet; no build step.
-  schemaui's own `examples/themes/midnight.css` is the shape to copy.
-- To map an external design system, translate its variables onto schemaui's
-  token names in that file (e.g. a design system's `--xx-accent` becomes
-  `--color-primary`); list each mapping as a comment next to the override.
-- For a fully custom frontend, the engine serves a plain REST contract
-  (`GET /api/v1/session`, `POST /api/v1/save|exit|validate|preview`) and can
-  host any directory containing an `index.html` via `--frontend DIR` — see
-  schemaui's `examples/frontend/`. Only reach for this when CSS cannot express
-  the request.
+1. Write a draft-07 JSON Schema. Give every question a recommended `default`
+   **and** list it in the parent's `required`, or the form will not pre-fill it.
+   Explain the recommendation in `description`, never in option labels. Write in
+   the user's language. Add `其他`/`other` to every enum with an optional
+   `<field>_custom` text field gated by `x-visible-when`. Use the richer
+   controls (`x-control`: `segmented`, `radio`, `slider`, `range`, `color`,
+   `checkbox`, `mermaid`; `x-multiline`; figures via `x-content` and
+   `x-options`) as `SKILL.md` describes.
+2. Run
+   `python3 <a2ui-ask>/scripts/ask.py --schema - --topic <slug> --title "…" --timeout 600`
+   with the schema on stdin (`ask.sh` / `ask.ps1` take the same flags). Never
+   use a terminal prompt: you have no TTY.
+3. In the same message, tell the user the printed `SCHEMAUI_URL`, the time
+   budget, and that answers go to `.schemaui/answers/`.
+4. Block until the script exits. Exit 0: read the answer file it names. Exit 6:
+   fix the schema from the error and rerun. Exit 3: offer
+   `bash <a2ui-ask>/scripts/install.sh` (`--source gitee` behind a blocked
+   github.com). Other exits: ask the same questions in one plain-text message,
+   take a JSON reply, and save it to
+   `.schemaui/answers/<topic>-manual-<YYYYMMDD-HHMMSS>.json`.
+5. Before asking, check the code and `.schemaui/answers/`; pass a relevant past
+   answer as `--config`.

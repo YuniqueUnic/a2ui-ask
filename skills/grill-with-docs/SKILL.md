@@ -64,6 +64,7 @@ shorter and better labelled than one drafted from memory.
 
 If the interviewer's questions are structured choices and config, stop asking in
 chat: generate a draft-07 JSON Schema with your recommended answers as
-`default`s and hand it to a2ui-ask's ask script, so the user gets a real form
-(see the a2ui-ask `SKILL.md` for the control cheat sheet). Use the form for the
-cluster of decisions; keep the chat interview for the open-ended ones.
+`default`s, list those fields in `required` so the form pre-fills them, and hand
+it to a2ui-ask's ask script, so the user gets a real form (the a2ui-ask
+`SKILL.md` has the control picker). Use the form for the cluster of decisions;
+keep the chat interview for the open-ended ones.
